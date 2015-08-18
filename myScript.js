@@ -1,3 +1,18 @@
+var Enums = {
+    Directions: {
+        LEFT: "L",
+        RIGHT: "R",
+        UP: "U",
+        DOWN: "D"
+    },
+
+    Colors: {
+        yellow: "#FFFF00",
+        blue: "#1c5cff",
+        darkBlue: '#1c5c88',
+        red: "#a90000"
+    }
+}
 var GameCfg = {
     uiElementsLength: 25,
     lineBreakToken: '|',
@@ -32,7 +47,7 @@ function init() {
 function initGameControlls() {
     //Set up key listener
     function onkey(d, e) {
-        var moveLogic = function () {
+        var moveLogic = function (uiElement) {
             if (!e) e = window.e;
             var c = e.keyCode;
             if (e.charCode && c == 0)
@@ -40,6 +55,7 @@ function initGameControlls() {
 
 
             var casted = UiElement('', '', ''); //dummy 
+            casted = uiElement;
             if (c == 37) { //left
                 // if (this.currentUiElement.direction != "L") {
                 //     this.currentUiElement.direction = "L";
@@ -53,8 +69,6 @@ function initGameControlls() {
                 //this.currentUiElement.vx = -d * 2;
 
                 casted.nextDirection = Enums.Directions.LEFT;
-                console.log(casted);
-
             }
             else if (c == 39) { //right
                 // if (this.currentUiElement.direction != "R") {
@@ -90,9 +104,13 @@ function initGameControlls() {
                 casted.nextDirection = Enums.Directions.DOWN;
 
             }
+            
+            if(!casted.direction){
+                //casted.direction = casted.nextDirection;
+            }
         };
 
-        moveLogic()
+        moveLogic(player);
     };
 
     document.onkeyup = function (e) {
@@ -125,7 +143,7 @@ function initGame() {
     var eater = Eater(13, 16);
     shapeList.push(eater);
 
-    currentUiElement = eater;
+    player = eater;
 }
 
 function clearScreen(ctx) {
@@ -168,22 +186,6 @@ var UiElements = {
     ghost: "ghost",
     dot: "dot",
     powerup: "powerup"
-}
-
-var Enums = {
-    Directions: {
-        LEFT: "L",
-        RIGHT: "R",
-        UP: "U",
-        DOWN: "D"
-    },
-
-    Colors: {
-        yellow: "#FFFF00",
-        blue: "#1c5cff",
-        darkBlue: '#1c5c88',
-        red: "#a90000"
-    }
 }
 
 var Draw = {
@@ -276,33 +278,40 @@ function calcNextPosition(element, allowDirectionChanging) {
     console.log("xStuff: " + casted.x / GameCfg.uiElementsLength);
     //console.log("yStuff: " + casted.y / GameCfg.uiElementsLength);
 
-     casted.x += GameCfg.ghostVx;
+    console.log('direction: ' + casted.direction, '; next: ' + casted.nextDirection);
     // casted.y += GameCfg.ghostVx;
-    return casted;
 
-    //     if (casted.direction == casted.nextDirection) {
-    //         switch (casted.direction) {
-    //             case Enums.Directions.DOWN:
-    //                 casted.vx = 0;
-    //                 casted.vy = GameCfg.ghostVx * -1;
-    //                 break;
-    //             case Enums.Directions.LEFT:
-    //                 casted.vy = 0;
-    //                 casted.vx = GameCfg.ghostVx * -1;
-    //                 break;
-    //             case Enums.Directions.RIGHT:
-    //                 casted.vy = 0;
-    //                 casted.vx = GameCfg.ghostVx;
-    //                 break;
-    //             case Enums.Directions.UP:
-    //                 casted.vx = 0;
-    //                 casted.vy = GameCfg.ghostVx;
-    //                 break;
-    // 
-    //             default:
-    //                 break;
-    //         }
-    //     }
+
+    if (casted.direction != casted.nextDirection) {
+        switch (casted.nextDirection) {
+            case Enums.Directions.DOWN:
+                casted.vx = 0;
+                casted.vy = GameCfg.ghostVx;
+                
+                break;
+            case Enums.Directions.LEFT:
+                casted.vy = 0;
+                casted.vx = GameCfg.ghostVx * -1;
+                break;
+            case Enums.Directions.RIGHT:
+                casted.vy = 0;
+                casted.vx = GameCfg.ghostVx;
+                break;
+            case Enums.Directions.UP:
+                casted.vx = 0;
+                casted.vy = GameCfg.ghostVx*-1;
+                break;
+            default:
+                break;
+                
+                casted.direction = casted.nextDirection;
+        }
+    }
+    
+    casted.x += casted.vx;
+    casted.y += casted.vy;
+    
+    return casted;
 }
 
 
@@ -324,8 +333,8 @@ function Cell(x, y, cType) {
 }
 
 function UiElement(x, y, eType) {
-    var vx = GameCfg.ghostVx;
-    var vy = GameCfg.ghostVx;
+    var vx = 0; //GameCfg.ghostVx;
+    var vy = 0; //GameCfg.ghostVx;
 
     return { "x": x, "y": y, "cType": eType, "length": GameCfg.uiElementsLength, "vx": vx, "vy": vy, "direction": null, "nextDirection": null, "fill": Enums.Colors.blue };
 }
@@ -333,8 +342,8 @@ function UiElement(x, y, eType) {
 function Eater(x, y) {
     var elem = UiElement(x * GameCfg.uiElementsLength, y * GameCfg.uiElementsLength, UiElements.eater);
     elem.fill = Enums.Colors.yellow;
-    elem.vx = GameCfg.eaterVx;
-    elem.vy = GameCfg.eaterVx
+    //elem.vx = GameCfg.eaterVx;
+    //elem.vy = GameCfg.eaterVx
 
     return elem;
 }
