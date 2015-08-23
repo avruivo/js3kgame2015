@@ -11,6 +11,14 @@ var Enums = {
         blue: "#1c5cff",
         darkBlue: '#1c5c88',
         red: "#a90000"
+    },
+    
+    UiElements: {
+        eater: "E",
+        ghost: "G",
+        dot: "o",
+        powerup: "O",
+        wall: "W"
     }
 }
 var GameCfg = {
@@ -24,7 +32,6 @@ var GameCfg = {
 
 window.onload = function () {
     init();
-    console.log(123);
 }
 
 function startMainLoop() {
@@ -65,7 +72,7 @@ function initGameControlls() {
                 //     this.currentUiElement.vx = -d * 2;
                 // }
 
-                console.log('left!!');
+                //console.log('left!!');
                 //this.currentUiElement.vx = -d * 2;
 
                 casted.nextDirection = Enums.Directions.LEFT;
@@ -138,7 +145,7 @@ var mainloop = function () {
 
 function initGame() {
     levelMatrix = Level.level01();
-    console.log('inited Game');
+    //console.log('inited Game');
 
     var eater = Eater(13, 16);
     shapeList.push(eater);
@@ -151,7 +158,7 @@ function clearScreen(ctx) {
 }
 
 function updateGame() {
-
+    frameCount++;
 }
 
 function drawGame(ctx) {
@@ -174,18 +181,18 @@ var Level = {
             var column = splitted[columnIndex]; //returns char[]
             for (var rowIndex = 0; rowIndex < column.length; rowIndex++) {
                 var cellType = column[rowIndex];
-                lclLevelMatrix.push(Cell(rowIndex, columnIndex, cellType));
+                var cell = Cell(rowIndex, columnIndex, cellType);
+                lclLevelMatrix.push(cell);
+                
+                if(cellType == Enums.UiElements.dot
+                    || cellType == Enums.UiElements.eater
+                    || cellType == Enums.UiElements.powerup){
+                        validCells.push(cell);
+                    }
             }
         }
         return lclLevelMatrix;
     }
-}
-
-var UiElements = {
-    eater: "eater",
-    ghost: "ghost",
-    dot: "dot",
-    powerup: "powerup"
 }
 
 var Draw = {
@@ -237,9 +244,22 @@ var Draw = {
 
             ctx.fillStyle = oldFillStyle;
 
-
+            var old = currElem;
             var movedElement = calcNextPosition(currElem, true);
-            currElem = movedElement;
+            
+            logEveryFrameX('FromX: ' + currElem.x + " FromY: " + currElem.y, 60);
+            logEveryFrameX('To__X: ' + movedElement.x + " To__Y: " + movedElement.y, 60);
+            
+            if(isNextPositionValid(currElem, movedElement)){
+                currElem.x = movedElement.x;
+                currElem.y = movedElement.y;
+                currElem.vx = movedElement.vx;
+                currElem.vy = movedElement.vy;
+            }else{
+                //console.log('position not allowed!');
+                logEveryFrameX('position not allowed!', 60);
+            }
+            
 
             //uiElementsList[i] = movedElement;
 
@@ -268,17 +288,18 @@ var Draw = {
 
 function calcNextPosition(element, allowDirectionChanging) {
     var casted = UiElement('', '', ''); //dummy
-    casted = element;
+    //casted = element;
+    casted = Object.create( element );
 
-    console.log("casted.x: " + casted.x);
+    //console.log("casted.x: " + casted.x);
     // console.log("casted.y: " + casted.y);
     // console.log("casted.Dir: " + casted.direction);
     // console.log("casted.NextDir: " + casted.nextDirection);
 
-    console.log("xStuff: " + casted.x / GameCfg.uiElementsLength);
+    //console.log("xStuff: " + casted.x / GameCfg.uiElementsLength);
     //console.log("yStuff: " + casted.y / GameCfg.uiElementsLength);
 
-    console.log('direction: ' + casted.direction, '; next: ' + casted.nextDirection);
+    //console.log('direction: ' + casted.direction, '; next: ' + casted.nextDirection);
     // casted.y += GameCfg.ghostVx;
 
 
@@ -314,6 +335,77 @@ function calcNextPosition(element, allowDirectionChanging) {
     return casted;
 }
 
+function isNextPositionValid(currentPosition, nextPosition){
+    var castedCurrentPos = UiElement('','','');
+    var castedNextPos = UiElement('','','');
+    
+    castedCurrentPos = currentPosition;
+    castedNextPos = nextPosition;
+    
+    var xDiff = castedNextPos.x - castedCurrentPos.x;
+    var yDiff = castedNextPos.y - castedCurrentPos.y;
+    
+    //var validCells = [];
+    //validCells = getValidCellsToMoveTo(castedCurrentPos, castedNextPos);
+    
+    var cellToFind = Cell('','','');
+    if(Math.abs(xDiff) >= 1 || Math.abs(yDiff) >= 1){
+        cellToFind.x = Math.floor(castedNextPos.x/GameCfg.uiElementsLength) + xDiff;
+        cellToFind.y = Math.floor(castedNextPos.y/GameCfg.uiElementsLength) + yDiff;
+    }
+    
+    for (var index = 0; index < validCells.length; index++) {
+        var cell = Cell('','',''); 
+        cell = validCells[index];
+        
+        // if(isValidCellToMoveTo(castedCurrentPos, castedNextPos, cell)){
+        //     return true;  
+        // }
+        if(cell.x == cellToFind.x && cell.y == cellToFind.y){
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+function isValidCellToMoveTo(currentPosition, nextPosition, cell){
+    var castedCurrentPos = UiElement('','','');
+    var castedNextPos = UiElement('','','');
+    
+    var validX = (castedCurrentPos.x >= cell.x)  
+        && (castedNextPos.x + GameCfg.uiElementsLength >= cell.x + GameCfg.uiElementsLength) 
+        && (cell.y == castedCurrentPos.y)
+        && (cell.cType != Enums.UiElements.wall);
+
+        return validX;
+    
+}
+
+// function getValidCellsToMoveTo(currentPosition, nextPosition){
+//     var castedCurrentPos = UiElement('','','');
+//     var castedNextPos = UiElement('','','');
+//     
+//     castedCurrentPos = currentPosition;
+//     castedNextPos = nextPosition;
+//     
+//     var validCells = [];
+//     for (var index = 0; index < levelMatrix.length; index++) {
+//         var cell = Cell('','','');
+//         cell = levelMatrix[index];
+//         
+//         
+//         if(isValidCellToMoveTo(castedCurrentPos, castedNextPos, cell)){
+//             validCells.push(cell);
+//         }
+//         
+//         //else if()
+//         
+//     }
+//     
+//     return validCells;
+// }
+
 
 function Shape(x, y, w, h, fill, vx, vy, name) {
     this.x = x;
@@ -340,7 +432,7 @@ function UiElement(x, y, eType) {
 }
 
 function Eater(x, y) {
-    var elem = UiElement(x * GameCfg.uiElementsLength, y * GameCfg.uiElementsLength, UiElements.eater);
+    var elem = UiElement(x * GameCfg.uiElementsLength, y * GameCfg.uiElementsLength, Enums.UiElements.eater);
     elem.fill = Enums.Colors.yellow;
     //elem.vx = GameCfg.eaterVx;
     //elem.vy = GameCfg.eaterVx
@@ -353,4 +445,10 @@ function Ghost(x, y, eType) {
     elem.fill = Enums.Colors.red;
 
     return elem;
+}
+
+function logEveryFrameX(val, frameX) {
+    if (frameCount % frameX == 0 || frameCount == 1 || frameX == undefined) {
+        console.log(val);
+    }
 }
