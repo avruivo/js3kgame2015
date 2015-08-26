@@ -388,7 +388,7 @@ function calcNextPosition(element, allowDirectionChanging) {
     return casted;
 }
 
-function isNextPositionValid(currentPosition, nextPosition){
+function isNextPositionValid(currentPosition, nextPosition) {
     var castedCurrentPos = UiElement('','','');
     var castedNextPos = UiElement('','','');
     
@@ -401,10 +401,31 @@ function isNextPositionValid(currentPosition, nextPosition){
     //var validCells = [];
     //validCells = getValidCellsToMoveTo(castedCurrentPos, castedNextPos);
     
+    var floorOrCeilLogic = (function(diff) {
+            if(diff >= 0){
+                return function(arg){
+                    return Math.floor(arg);
+                };
+            }else{
+                return function(arg){
+                    return Math.ceil(arg);
+                };
+            }
+        });
+    
     var cellToFind = Cell('','','');
-    if(Math.abs(xDiff) >= 1 || Math.abs(yDiff) >= 1){
-        cellToFind.x = Math.floor(castedNextPos.x/GameCfg.uiElementsLength) + xDiff;
-        cellToFind.y = Math.floor(castedNextPos.y/GameCfg.uiElementsLength) + yDiff;
+    if(Math.abs(xDiff) >= 1) {
+        
+        cellToFind.y = Math.round(castedCurrentPos.y/GameCfg.uiElementsLength);
+        
+        var moveLogicX = floorOrCeilLogic(xDiff);        
+        cellToFind.x = moveLogicX(castedNextPos.x/GameCfg.uiElementsLength)+xDiff;
+    }
+    
+    if(Math.abs(yDiff) >= 1){
+        cellToFind.x = Math.round(castedCurrentPos.x/GameCfg.uiElementsLength);
+        var moveLogicY = floorOrCeilLogic(yDiff);
+        cellToFind.y = moveLogicY(castedNextPos.y/GameCfg.uiElementsLength)+yDiff;
     }
     
     for (var index = 0; index < validCells.length; index++) {
@@ -422,18 +443,18 @@ function isNextPositionValid(currentPosition, nextPosition){
     return false;
 }
 
-function isValidCellToMoveTo(currentPosition, nextPosition, cell){
-    var castedCurrentPos = UiElement('','','');
-    var castedNextPos = UiElement('','','');
-    
-    var validX = (castedCurrentPos.x >= cell.x)  
-        && (castedNextPos.x + GameCfg.uiElementsLength >= cell.x + GameCfg.uiElementsLength) 
-        && (cell.y == castedCurrentPos.y)
-        && (cell.cType != Enums.UiElements.wall);
-
-        return validX;
-    
-}
+// function isValidCellToMoveTo(currentPosition, nextPosition, cell){
+//     var castedCurrentPos = UiElement('','','');
+//     var castedNextPos = UiElement('','','');
+//     
+//     var validX = (castedCurrentPos.x >= cell.x)  
+//         && (castedNextPos.x + GameCfg.uiElementsLength >= cell.x + GameCfg.uiElementsLength) 
+//         && (cell.y == castedCurrentPos.y)
+//         && (cell.cType != Enums.UiElements.wall);
+// 
+//         return validX;
+//     
+// }
 
 // function getValidCellsToMoveTo(currentPosition, nextPosition){
 //     var castedCurrentPos = UiElement('','','');
