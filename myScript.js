@@ -10,7 +10,9 @@ var Enums = {
         yellow: "#FFFF00",
         blue: "#1c5cff",
         darkBlue: '#1c5c88',
-        red: "#a90000"
+        red: "#a90000",
+        black: "#000000",
+        white: "#FFFFFF"
     },
     
     UiElements: {
@@ -25,6 +27,7 @@ var GameCfg = {
     uiElementsLength: 25,
     lineBreakToken: '|',
     showBoundingBoxs: false,
+    opacity: 0.8,
 
     eaterVx: 2,
     ghostVx: 1
@@ -137,7 +140,7 @@ var mainloop = function () {
     //currentSeconds();
 
 
-    ctx.globalAlpha = opacity;
+    ctx.globalAlpha = GameCfg.opacity;
 
     //Draw.hpBar(ctx);
     Draw.levelInit(levelMatrix, ctx);
@@ -152,7 +155,9 @@ function initGame() {
 
     player = eater;
     
+    
     movingElements.push(eater);
+    var ctx = c.getContext("2d");
 }
 
 function clearScreen(ctx) {
@@ -164,7 +169,9 @@ function updateGame() {
 }
 
 function drawGame(ctx) {
+    Draw.cells(validCells, ctx);
     Draw.uiElements(movingElements, ctx);
+    Draw.uiElement(player, ctx);
 }
 
 
@@ -214,14 +221,21 @@ var Draw = {
 //         }
 // 
 //     },
-    cell: function(element, ctx){
+    cells: function(matrix, ctx){
+        Draw.levelInit(matrix, ctx);
+    },
+    cell: function(element, ctx, secondCall){
         var casted = Cell('','','');
         casted = element; 
 
         if (element.cType == "W") {
+            
             ctx.fillStyle = Enums.Colors.blue;
+            
         } else if (element.cType == "w") {
             ctx.fillStyle = Enums.Colors.darkBlue;
+        } else if (element.cType == "o") {
+            ctx.fillStyle = Enums.Colors.white;
         }
         else {
             ctx.fillStyle = Enums.Colors.red;
@@ -235,7 +249,6 @@ var Draw = {
         var tempy = length * element.y;
         ctx.fillRect(tempx, tempy, length, length);
     },
-    
     levelInit: function (matrix, ctx) {
         if (matrix && matrix.length > 0) {
             for (var index = 0; index < matrix.length; index++) {
@@ -256,9 +269,14 @@ var Draw = {
 //                 var tempx = length * element.x;
 //                 var tempy = length * element.y;
 //                 ctx.fillRect(tempx, tempy, length, length);
+
                 Draw.cell(element, ctx);
             }
         }
+    },
+    
+    uiElement: function(uiElem, ctx) {
+        ctxHelper.fillRect(uiElem, ctx);  
     }
 
     // , eater: function(ctx, x, y) {
@@ -267,10 +285,11 @@ var Draw = {
     // }
     , uiElements: function (uiElementsList, ctx) {
         for (var i in uiElementsList) {
-            var currElem = uiElementsList[i];
+            var currElem = UiElement('','','');
+            currElem = uiElementsList[i];
             var oldFillStyle = ctx.fillStyle;
             ctx.fillStyle = currElem.fill;
-            ctx.fillRect(currElem.x, currElem.y, currElem.length, currElem.length);
+            //ctx.fillRect(currElem.x, currElem.y, currElem.length, currElem.length);
 
             ctx.fillStyle = oldFillStyle;
 
@@ -281,7 +300,8 @@ var Draw = {
             logEveryFrameX('To__X: ' + movedElement.x + " To__Y: " + movedElement.y, 60);
             
             if(isNextPositionValid(currElem, movedElement)){
-                var mapElement = levelMatrix[currElem.x, currElem.y];
+                //var mapElement = levelMatrix[currElem.cellX, currElem.cellY];
+                var mapElement = getCellFromUiElement(levelMatrix, currElem);
                 Draw.cell(mapElement, ctx);
                 
                 currElem.x = movedElement.x;
@@ -457,23 +477,17 @@ function Cell(x, y, cType) {
     return { "x": x, "y": y, "cType": cType };
 }
 
-// function UiElement2(x, y, eType) {
-//     var vx = 0; //GameCfg.ghostVx;
-//     var vy = 0; //GameCfg.ghostVx;
-// 
-//     return { "cellX": x, "cellY": y, "x": x*GameCfg.uiElementsLength, "y": y*GameCfg.uiElementsLength, "cType": eType, "length": GameCfg.uiElementsLength, "vx": vx, "vy": vy, "direction": null, "nextDirection": null, "fill": Enums.Colors.blue };
-// }
-
 function UiElement(x, y, eType) {
     var vx = 0; //GameCfg.ghostVx;
     var vy = 0; //GameCfg.ghostVx;
 
-    return { "x": x, "y": y, "cType": eType, "length": GameCfg.uiElementsLength, "vx": vx, "vy": vy, "direction": null, "nextDirection": null, "fill": Enums.Colors.blue };
+    return { "cellX": x, "cellY": y, "x": x*GameCfg.uiElementsLength, "y": y*GameCfg.uiElementsLength, "cType": eType, "length": GameCfg.uiElementsLength, "vx": vx, "vy": vy, "direction": null, "nextDirection": null, "fill": Enums.Colors.blue };
 }
 
+
 function Eater(x, y) {
-    var elem = UiElement(x * GameCfg.uiElementsLength, y * GameCfg.uiElementsLength, Enums.UiElements.eater);
-    elem.fill = Enums.Colors.yellow;
+    var elem = UiElement(x, y, Enums.UiElements.eater);
+    elem.fill = Enums.Colors.black;
     //elem.vx = GameCfg.eaterVx;
     //elem.vy = GameCfg.eaterVx
 
@@ -491,4 +505,25 @@ function logEveryFrameX(val, frameX) {
     if (frameCount % frameX == 0 || frameCount == 1 || frameX == undefined) {
         console.log(val);
     }
+}
+
+var ctxHelper = {
+    fillRect: function(uiElem, ctx){
+        var oldStyle = ctx.fillStyle;
+        ctx.fillStyle = uiElem.fill;
+        ctx.fillRect(uiElem.x, uiElem.y, uiElem.length, uiElem.length); 
+        ctx.fillStyle = oldStyle;
+    }   
+}
+
+function getCellFromUiElement(matrix, elem){
+    var castedElem = UiElement('','','');
+    castedElem = elem;
+    for (var index = 0; index < matrix.length; index++) { 
+        var cell = matrix[index];
+        if(cell.x == castedElem.cellX && cell.y == castedElem.cellY){
+            return cell;
+        }   
+    }
+    return null;   
 }
