@@ -24,7 +24,7 @@ var Enums = {
     }
 }
 var GameCfg = {
-    uiElementsLength: 25,
+    uiElementsLength: 20,
     lineBreakToken: '|',
     showBoundingBoxs: false,
     opacity: 0.8,
@@ -415,15 +415,13 @@ function isNextPositionValid(currentPosition, nextPosition) {
     
     var cellToFind = Cell('','','');
     if(Math.abs(xDiff) >= 1) {
-        
-        cellToFind.y = Math.round(castedCurrentPos.y/GameCfg.uiElementsLength);
-        
+        cellToFind.y = Math.round(castedNextPos.y/GameCfg.uiElementsLength);
         var moveLogicX = floorOrCeilLogic(xDiff);        
         cellToFind.x = moveLogicX(castedNextPos.x/GameCfg.uiElementsLength)+xDiff;
     }
     
     if(Math.abs(yDiff) >= 1){
-        cellToFind.x = Math.round(castedCurrentPos.x/GameCfg.uiElementsLength);
+        cellToFind.x = Math.round(castedNextPos.x/GameCfg.uiElementsLength);
         var moveLogicY = floorOrCeilLogic(yDiff);
         cellToFind.y = moveLogicY(castedNextPos.y/GameCfg.uiElementsLength)+yDiff;
     }
