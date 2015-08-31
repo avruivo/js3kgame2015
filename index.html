@@ -2,19 +2,43 @@
 <head title="Join the dark forces, for once!">
     <script src="myScript.js"></script>
 </head>
-<style>
-    #canvas{
-        /*margin:15px;*/
-        /*margin:auto;*/
-    }
-</style>
+
 <body>
-    
-    <div>
-        <canvas id="canvas" width="560px" height="600px" style="border:1px solid black; display: block;
-touch-action: none; -webkit-user-select: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
- cursor: inherit"></canvas>
-    </div>
+    <style>
+        #canvas {
+            /*margin:15px;*/
+            /*margin:auto;*/
+            background-color: pink;
+            display: block;
+        }
+        
+        .cell1{
+            background-color:pink;
+        }
+        
+        .cell2{
+            background-color:gray;
+        }
+    </style>
+
+
+    <table border = 1>
+        <tbody>
+            <tr>
+                <td class="cell1">
+                    <canvas id="canvas" width="560px" height="600px" style="border:1px solid black;
+                        touch-action: none; -webkit-user-select: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+                        cursor: inherit"></canvas>
+                </td>
+                <td class="cell2">
+                    <div style="width:560px; text-align:center; font-weight:bold;">
+                        TODO: add button controllers
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
     <div style="margin:auto; width:900px; display:none">
         <button id="earth1">[1] Fix boat!</button>  <button id="air1">[2] Get fish!</button> <button id="fire1">[3] Hit shark!</button> <button id="stopLoopBtn" onclick="clearMainInterval();">STOP LOOP</button>
     </div>
@@ -31,10 +55,10 @@ touch-action: none; -webkit-user-select: none; -webkit-tap-highlight-color: rgba
     var startTime = new Date(Date.now());
     var levelMatrix = [];
     var validCells = [];
-    
+
     var player = null;
-    
-    
+
+
     var xpto = -1;
     var frameCount = 0;
     var color = "#FF0000";
@@ -48,7 +72,7 @@ touch-action: none; -webkit-user-select: none; -webkit-tap-highlight-color: rgba
     var hud = null;
     var magePlayer = null;
 
-    
+
     var fishToEat = 0;
     var showBoundingBoxs = false;
     var scrollLeft = true;
@@ -58,6 +82,6 @@ touch-action: none; -webkit-user-select: none; -webkit-tap-highlight-color: rgba
 
     /* ---- GLOBALS (-) ----- */
 
-    
+
 
 </script>
