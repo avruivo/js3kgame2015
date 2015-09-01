@@ -301,7 +301,8 @@ var Draw = {
              logEveryFrameX('CurrDir: ' + currElem.direction, 60);
              logEveryFrameX('NextDir: ' + movedElement.nextDirection, 60);
             
-            if(isNextPositionValid(currElem, movedElement)){
+            var checkFuture = true && currElem.direction != movedElement.nextDirection;
+            if(isNextPositionValid(currElem, movedElement, checkFuture)){
                 //var mapElement = levelMatrix[currElem.cellX, currElem.cellY];
                 var mapElement = getCellFromUiElement(levelMatrix, currElem);
                 Draw.cell(mapElement, ctx);
@@ -327,7 +328,7 @@ var Draw = {
             
             next.x += next.vx;
             next.y += next.vy;            
-            if(isNextPositionValid(currElem, next)){
+            if(isNextPositionValid(currElem, next, false)){
                 currElem.x += currElem.vx;
                 currElem.y += currElem.vy;
             }
@@ -410,7 +411,7 @@ function calcNextPosition(element, allowDirectionChanging) {
     return casted;
 }
 
-function isNextPositionValid(currentPosition, nextPosition) {
+function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
     var castedCurrentPos = UiElement('','','');
     var castedNextPos = UiElement('','','');
     
@@ -456,6 +457,10 @@ function isNextPositionValid(currentPosition, nextPosition) {
         //     return true;  
         // }
         if(cell.x == cellToFind.x && cell.y == cellToFind.y){
+            
+            if(checkFuture){
+                logEveryFrameX("DiffX: " + xDiff + "; cell.x: " + cell.x + "; cell.y: " + cell.y, 60);
+            }
             return true;
         }
     }
