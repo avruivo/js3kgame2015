@@ -296,22 +296,42 @@ var Draw = {
             var old = currElem;
             var movedElement = calcNextPosition(currElem, true);
             
-            logEveryFrameX('FromX: ' + currElem.x + " FromY: " + currElem.y, 60);
-            logEveryFrameX('To__X: ' + movedElement.x + " To__Y: " + movedElement.y, 60);
+            // logEveryFrameX('FromX: ' + currElem.x + " FromY: " + currElem.y, 60);
+            // logEveryFrameX('To__X: ' + movedElement.x + " To__Y: " + movedElement.y, 60);
+             logEveryFrameX('CurrDir: ' + currElem.direction, 60);
+             logEveryFrameX('NextDir: ' + movedElement.nextDirection, 60);
             
             if(isNextPositionValid(currElem, movedElement)){
                 //var mapElement = levelMatrix[currElem.cellX, currElem.cellY];
                 var mapElement = getCellFromUiElement(levelMatrix, currElem);
                 Draw.cell(mapElement, ctx);
                 
-                currElem.x = movedElement.x;
-                currElem.y = movedElement.y;
+                //currElem.x = movedElement.x;
+                //currElem.y = movedElement.y;
                 currElem.vx = movedElement.vx;
                 currElem.vy = movedElement.vy;
+                
+                //currElem.direction = currElem.direction;
+                if(currElem.direction != movedElement.nextDirection){
+                    currElem.direction = movedElement.nextDirection;
+                    currElem.nextDirection = movedElement.nextDirection;
+                }
+
+                    
             }else{
                 //console.log('position not allowed!');
                 logEveryFrameX('position not allowed!', 60);
             }
+            
+            var next = Object.create( currElem );//UiElement('','','');
+            
+            next.x += next.vx;
+            next.y += next.vy;            
+            if(isNextPositionValid(currElem, next)){
+                currElem.x += currElem.vx;
+                currElem.y += currElem.vy;
+            }
+            
             
 
             //uiElementsList[i] = movedElement;
@@ -336,6 +356,9 @@ var Draw = {
                 //write(iShape);
             }
         }
+        
+        
+        //Debug.writeText(ctx, 10, 10, "teste", "avr");
     }
 }
 
@@ -361,7 +384,6 @@ function calcNextPosition(element, allowDirectionChanging) {
             case Enums.Directions.DOWN:
                 casted.vx = 0;
                 casted.vy = GameCfg.ghostVx;
-                
                 break;
             case Enums.Directions.LEFT:
                 casted.vy = 0;
@@ -378,7 +400,7 @@ function calcNextPosition(element, allowDirectionChanging) {
             default:
                 break;
                 
-                casted.direction = casted.nextDirection;
+                //casted.direction = casted.nextDirection;
         }
     }
     
@@ -500,7 +522,21 @@ function UiElement(x, y, eType) {
     var vx = 0; //GameCfg.ghostVx;
     var vy = 0; //GameCfg.ghostVx;
 
-    return { "cellX": x, "cellY": y, "x": x*GameCfg.uiElementsLength, "y": y*GameCfg.uiElementsLength, "cType": eType, "length": GameCfg.uiElementsLength, "vx": vx, "vy": vy, "direction": null, "nextDirection": null, "fill": Enums.Colors.blue };
+    return { 
+        "cellX": x, 
+        "cellY": y, 
+        "x": x*GameCfg.uiElementsLength, 
+        "y": y*GameCfg.uiElementsLength, 
+        "cType": eType, 
+        "length": GameCfg.uiElementsLength, 
+        "vx": vx, 
+        "vy": vy, 
+        "direction": null, 
+        "nextDirection": null, 
+        //"nextDirectionToBe": null,
+        "fill": Enums.Colors.blue
+         
+        };
 }
 
 
@@ -545,4 +581,18 @@ function getCellFromUiElement(matrix, elem){
         }   
     }
     return null;   
+}
+
+var Debug = {
+    addLi: function(name, value){
+        var li = document.createElement("li"); 
+        var liInnerHtml = document.createTextNode(name + ": " + value);
+        li.appendChild(liInnerHtml);
+        document.getElementById('debugUl').appendChild(li);
+    },
+    writeText: function(ctx, x, y, name, value){
+        var oldStyle = ctx.fillStyle;
+        ctx.fillText(name + ": " + value, 20, 20); 
+        ctx.fillStyle = oldStyle;
+    }
 }
