@@ -244,10 +244,15 @@ var Draw = {
         }
 
         var length = GameCfg.uiElementsLength;
-
+            
+            var minus = 0;
+            if(secondCall){
+                minus = 5;
+            }
+            
         var tempx = length * element.x;
         var tempy = length * element.y;
-        ctx.fillRect(tempx, tempy, length, length);
+        ctx.fillRect(tempx, tempy, length-minus, length);
     },
     levelInit: function (matrix, ctx) {
         if (matrix && matrix.length > 0) {
@@ -305,7 +310,7 @@ var Draw = {
             if(isNextPositionValid(currElem, movedElement, checkFuture)){
                 //var mapElement = levelMatrix[currElem.cellX, currElem.cellY];
                 var mapElement = getCellFromUiElement(levelMatrix, currElem);
-                Draw.cell(mapElement, ctx);
+                Draw.cell(mapElement, ctx, true);
                 
                 //currElem.x = movedElement.x;
                 //currElem.y = movedElement.y;
@@ -436,17 +441,49 @@ function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
             }
         });
     
+    var msg01 = "xDiff: " + xDiff + "; yDiff: " + yDiff;
+    Debug.debugMessage(1, msg01);
+    var msg02 = "(castedNextPos.DIR: "+ castedNextPos.direction + ";  castedNextPos.NDIR: " + castedNextPos.nextDirection + "); --||-- (castedCurrentPos.DIR: " + castedCurrentPos.direction + "; castedCurrentPos.NDIR: " + castedCurrentPos.nextDirection + ")";
+    Debug.debugMessage(2, msg02);
+    
+    var msg03 = "castedCurrentPos.x: " + castedCurrentPos.x + "; castedNextPos.x: " + castedNextPos.x
+    + "castedCurrentPos.y: " + castedCurrentPos.y + "; castedNextPos.y: " + castedNextPos.y;
+    Debug.debugMessage(3, msg03);
+    
+    var xDiffManual = 0;
+    var yDiffManual = 0;
+    
+    if(castedNextPos.nextDirection == Enums.Directions.RIGHT || castedCurrentPos.direction == Enums.Directions.RIGHT){
+        xDiffManual = 1;
+    }else if (castedNextPos.nextDirection == Enums.Directions.LEFT || castedCurrentPos.direction == Enums.Directions.LEFT){
+        xDiffManual = -1;
+    }
+    
+    if(castedNextPos.nextDirection == Enums.Directions.UP || castedCurrentPos.direction == Enums.Directions.UP){
+        yDiffManual = -1;
+    }else if (castedNextPos.nextDirection == Enums.Directions.DOWN || castedCurrentPos.direction == Enums.Directions.DOWN){
+        yDiffManual = 1;
+    }
+    
+    var msg04 = "xDiffManual: " + xDiffManual + "; yDiffManual: " + yDiffManual;
+    Debug.debugMessage(4, msg04);
+    
+    
+    var moveLogicX = floorOrCeilLogic(xDiffManual);
+    var moveLogicY = floorOrCeilLogic(yDiffManual);
+    
+    
     var cellToFind = Cell('','','');
     if(Math.abs(xDiff) >= 1) {
-        cellToFind.y = Math.round(castedNextPos.y/GameCfg.uiElementsLength);
-        var moveLogicX = floorOrCeilLogic(xDiff);        
-        cellToFind.x = moveLogicX(castedNextPos.x/GameCfg.uiElementsLength)+xDiff;
+        //cellToFind.y = Math.floor(castedNextPos.y/GameCfg.uiElementsLength);
+        cellToFind.y = moveLogicY((castedNextPos.y - yDiff)/GameCfg.uiElementsLength) + yDiff;
+        cellToFind.x = moveLogicX((castedNextPos.x - xDiff)/GameCfg.uiElementsLength) + xDiff;
     }
     
     if(Math.abs(yDiff) >= 1){
-        cellToFind.x = Math.round(castedNextPos.x/GameCfg.uiElementsLength);
-        var moveLogicY = floorOrCeilLogic(yDiff);
-        cellToFind.y = moveLogicY(castedNextPos.y/GameCfg.uiElementsLength)+yDiff;
+        //cellToFind.x = Math.ceil(castedNextPos.x/GameCfg.uiElementsLength);
+        cellToFind.x = moveLogicX((castedNextPos.x - xDiff)/GameCfg.uiElementsLength) + xDiff;
+        cellToFind.y = moveLogicY((castedNextPos.y - yDiff)/GameCfg.uiElementsLength) + yDiff;
     }
     
     for (var index = 0; index < validCells.length; index++) {
@@ -460,6 +497,7 @@ function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
             
             if(checkFuture){
                 logEveryFrameX("DiffX: " + xDiff + "; cell.x: " + cell.x + "; cell.y: " + cell.y, 60);
+                //alert(123);
             }
             return true;
         }
@@ -599,5 +637,10 @@ var Debug = {
         var oldStyle = ctx.fillStyle;
         ctx.fillText(name + ": " + value, 20, 20); 
         ctx.fillStyle = oldStyle;
+    },
+    debugMessage: function(count, message){        
+        var divId = "divDebug0" + count;
+        var debugDiv = document.getElementById(divId);
+        debugDiv.innerText = message;
     }
 }
