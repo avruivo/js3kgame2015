@@ -466,11 +466,12 @@ function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
     }
     
     var msg04 = "xDiffManual: " + xDiffManual + "; yDiffManual: " + yDiffManual;
+    //msg04 = "COUNTER:" + counter;;
     Debug.debugMessage(4, msg04);
     
     
     var moveLogicX = floorOrCeilLogic(xDiffManual);
-    var moveLogicY = floorOrCeilLogic(yDiffManual);
+    var moveLogicY = floorOrCeilLogic(1*yDiffManual);
     
     
     var cellToFind = Cell('','','');
@@ -486,6 +487,7 @@ function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
         cellToFind.y = moveLogicY((castedNextPos.y - yDiff)/GameCfg.uiElementsLength) + yDiff;
     }
     
+    
     for (var index = 0; index < validCells.length; index++) {
         var cell = Cell('','',''); 
         cell = validCells[index];
@@ -496,8 +498,12 @@ function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
         if(cell.x == cellToFind.x && cell.y == cellToFind.y){
             
             if(checkFuture){
-                logEveryFrameX("DiffX: " + xDiff + "; cell.x: " + cell.x + "; cell.y: " + cell.y, 60);
-                //alert(123);
+                counter++;
+                var mmsg = "DiffX: " + xDiff + "; cell.x: " + cell.x + "; cell.y: " + cell.y;
+                logEveryFrameX(mmsg, 60);
+                if(counter == 100){
+                    alert(mmsg + "; Counter: " + counter);
+                }
             }
             return true;
         }
