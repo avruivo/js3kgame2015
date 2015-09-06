@@ -33,6 +33,10 @@ var GameCfg = {
     ghostVx: 1
 }
 
+var GameVars = {
+    isChaseTime: true
+}
+
 window.onload = function () {
     init();
 }
@@ -120,7 +124,7 @@ function initGameControlls() {
             }
         };
 
-        moveLogic(player);
+        moveLogic(_prey);
     };
 
     document.onkeyup = function (e) {
@@ -153,11 +157,30 @@ function initGame() {
     var eater = Eater(13, 16);
     
 
-    player = eater;
+    _prey = eater;
+    
+    var addGhost = function(x, y, timer){
+        
+        var handler = function(){
+            var g1 = Ghost(x,y);
+            
+            g1.target1 = _prey;
+            g1.target2 = null; 
+            
+            movingElements.push(g1);    
+        };
+        
+        //window.setInterval(handler, timer);
+        handler();
+    };
+    
     
     
     movingElements.push(eater);
     var ctx = c.getContext("2d");
+    
+    addGhost(23,1, 2000);
+    addGhost(5,1, 4000);
 }
 
 function clearScreen(ctx) {
@@ -170,8 +193,10 @@ function updateGame() {
 
 function drawGame(ctx) {
     Draw.cells(validCells, ctx);
+    //Draw.scoreElements(); //TODO:
     Draw.uiElements(movingElements, ctx);
-    Draw.uiElement(player, ctx);
+    
+    //Draw.uiElement(_prey, ctx);
 }
 
 
@@ -292,14 +317,16 @@ var Draw = {
         for (var i in uiElementsList) {
             var currElem = UiElement('','','');
             currElem = uiElementsList[i];
-            var oldFillStyle = ctx.fillStyle;
-            ctx.fillStyle = currElem.fill;
-            //ctx.fillRect(currElem.x, currElem.y, currElem.length, currElem.length);
-
-            ctx.fillStyle = oldFillStyle;
+            
 
             var old = currElem;
-            var movedElement = calcNextPosition(currElem, true);
+            var movedElement = AI.Move(currElem);
+            
+            
+            if(currElem.cType != Enums.UiElements.eater){
+                var breakAvr = true;
+                var tst = "current: x= " + currElem.x + "; y="+ currElem.y + "; moved: x=" + movedElement.x + " y=" + movedElement.y;
+            }
             
             // logEveryFrameX('FromX: ' + currElem.x + " FromY: " + currElem.y, 60);
             // logEveryFrameX('To__X: ' + movedElement.x + " To__Y: " + movedElement.y, 60);
@@ -310,7 +337,8 @@ var Draw = {
             if(isNextPositionValid(currElem, movedElement, checkFuture)){
                 //var mapElement = levelMatrix[currElem.cellX, currElem.cellY];
                 var mapElement = getCellFromUiElement(levelMatrix, currElem);
-                Draw.cell(mapElement, ctx, true);
+                //Draw.cell(mapElement, ctx, true);
+                
                 
                 //currElem.x = movedElement.x;
                 //currElem.y = movedElement.y;
@@ -329,6 +357,8 @@ var Draw = {
                 logEveryFrameX('position not allowed!', 60);
             }
             
+            Draw.uiElement(currElem, ctx);
+            
             var next = Object.create( currElem );//UiElement('','','');
             
             next.x += next.vx;
@@ -342,7 +372,7 @@ var Draw = {
 
             //uiElementsList[i] = movedElement;
 
-            return;
+            continue;
             // if(currElem.eType == UiElements.eater){
             //     
             // }
@@ -502,7 +532,7 @@ function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
                 var mmsg = "DiffX: " + xDiff + "; cell.x: " + cell.x + "; cell.y: " + cell.y;
                 logEveryFrameX(mmsg, 60);
                 if(counter == 100){
-                    alert(mmsg + "; Counter: " + counter);
+                    //alert(mmsg + "; Counter: " + counter);
                 }
             }
             return true;
@@ -601,7 +631,11 @@ function Eater(x, y) {
 function Ghost(x, y, eType) {
     var elem = UiElement(x, y, eType);
     elem.fill = Enums.Colors.red;
+    elem.cType = Enums.UiElements.ghost;
 
+    elem.target1 = null;
+    elem.target2 = null;
+    
     return elem;
 }
 
@@ -648,5 +682,75 @@ var Debug = {
         var divId = "divDebug0" + count;
         var debugDiv = document.getElementById(divId);
         debugDiv.innerText = message;
+    }
+}
+
+var AI = {
+    Move: function(elem){
+        var casted = UiElement('','','');
+        casted = elem;
+        
+        if(casted.cType == Enums.UiElements.ghost){
+            return AI.MoveGhost(elem);
+        }else{
+            return AI.MoveEater(elem);
+        }
+    },
+    
+    MoveGhost: function(elem){
+        var casted = UiElement('','',''); casted = casted = Object.create( elem );
+        var target = UiElement('','',''); target = casted.target1;
+        
+        
+        var calcMiddle = function(value) {
+            return value + (GameCfg.uiElementsLength / 2);
+        };
+            
+        
+        var targetMiddleX = calcMiddle(target.x); 
+        var targetMiddleY = calcMiddle(target.y);
+        
+        var elemMiddleX = calcMiddle(casted.x);
+        var elemMiddleY = calcMiddle(casted.y);
+
+        var xDiff = elemMiddleX - targetMiddleX;
+        var yDiff = elemMiddleY - targetMiddleY;
+        
+        if(Math.abs(xDiff) > 0 && elem.vx == 0){
+            if(xDiff < 0){
+                casted.nextDirection = Enums.Directions.RIGHT;
+                casted.vx = GameCfg.ghostVx;
+                casted.vy = 0;
+            }else{
+                casted.nextDirection = Enums.Directions.LEFT;
+                casted.vx = GameCfg.ghostVx*-1;
+                casted.vy = 0;
+            }
+        }else if(Math.abs(yDiff) > 0 && elem.vy == 0){
+            if(yDiff < 0){
+                casted.nextDirection = Enums.Directions.DOWN;
+                casted.vy = GameCfg.ghostVx;
+                casted.vx = 0;
+            }else{
+                casted.nextDirection = Enums.Directions.UP;
+                casted.vy = GameCfg.ghostVx*-1;
+                casted.vx = 0;
+            }
+        }
+        
+        //if it's the first time
+        if(!casted.direction){
+            casted.direction = casted.nextDirection;
+        }
+        
+        casted.x += casted.vx;
+        casted.y += casted.vy;
+        
+        return casted;
+    },
+    
+    MoveEater: function(elem){
+        var currElem = UiElement('','',''); currElem = elem;
+        return calcNextPosition(currElem, true);
     }
 }
