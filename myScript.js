@@ -179,8 +179,8 @@ function initGame() {
     movingElements.push(eater);
     var ctx = c.getContext("2d");
     
-    addGhost(23,1, 2000);
-    addGhost(5,1, 4000);
+    // addGhost(23,1, 2000);
+    // addGhost(5,1, 4000);
 }
 
 function clearScreen(ctx) {
@@ -340,8 +340,8 @@ var Draw = {
                 //Draw.cell(mapElement, ctx, true);
                 
                 
-                //currElem.x = movedElement.x;
-                //currElem.y = movedElement.y;
+                currElem.x = movedElement.x;
+                currElem.y = movedElement.y;
                 currElem.vx = movedElement.vx;
                 currElem.vy = movedElement.vy;
                 
@@ -361,12 +361,12 @@ var Draw = {
             
             var next = Object.create( currElem );//UiElement('','','');
             
-            next.x += next.vx;
-            next.y += next.vy;            
-            if(isNextPositionValid(currElem, next, false)){
-                currElem.x += currElem.vx;
-                currElem.y += currElem.vy;
-            }
+            // next.x += next.vx;
+            // next.y += next.vy;            
+            // if(isNextPositionValid(currElem, next, false)){
+            //     currElem.x += currElem.vx;
+            //     currElem.y += currElem.vy;
+            // }
             
             
 
@@ -447,6 +447,83 @@ function calcNextPosition(element, allowDirectionChanging) {
 }
 
 function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
+    var castedNextPos = UiElement('','',''); castedNextPos = nextPosition;
+    var castedCurrentPos = UiElement('','',''); castedCurrentPos = currentPosition;
+    
+    var xDiff = castedNextPos.x - castedCurrentPos.x;
+    var yDiff = castedNextPos.y - castedCurrentPos.y;
+    
+    // var p1 = castedNextPos.x;
+    // var p2 = castedNextPos.x + (xDiff * GameCfg.uiElementsLength);
+    // var p3 = castedNextPos.y;
+    // var p4 = castedNextPos.y + (yDiff * GameCfg.uiElementsLength);
+    
+    var p1 = castedNextPos.x;
+    var p2 = castedNextPos.x + GameCfg.uiElementsLength;
+    var p3 = castedNextPos.y;
+    var p4 = castedNextPos.y + GameCfg.uiElementsLength;
+    
+    var p1valid, p2valid, p3valid, p4valid = false;
+    
+    for (var index = 0; index < validCells.length; index++) {
+        var cell = Cell('','',''); 
+        cell = validCells[index];
+        
+        var xi = cell.x * GameCfg.uiElementsLength;
+        var xf = cell.x * GameCfg.uiElementsLength + GameCfg.uiElementsLength;
+        
+        var yi = cell.y * GameCfg.uiElementsLength;
+        var yf = cell.y * GameCfg.uiElementsLength + GameCfg.uiElementsLength;
+        
+        if(cell.x == 12 && cell.y == 16){
+            //alert(123);
+            console.log('avr;');
+        }
+
+//          p1valid = (p1 >= xi && p1 <= xf);
+//          p3valid = (p3 >= yi && p3 <= yf);
+// 
+//          p2valid = (p2 >= xi && p2 <= xf);
+//          p4valid = (p4 >= yi && p4 <= yf);
+        
+        if(!p1valid){ 
+            if(p1 >= xi && p1 <= xf){
+                if(p3 >= yi && p3 <= yf){
+                    p1valid = true;
+                    p3valid = true;
+                    
+                    var msg01 = "p1(x): " + xi + " <= " + p1 + " <= " + xf;
+                    var msg02 = "p3(y): " + yi + " <= " + p3 + " <= " + yf;
+                    Debug.debugMessage(1, msg01);
+                    Debug.debugMessage(2, msg02);
+                }
+            }
+        }
+                
+        if(!p2valid){ 
+            if(p2 >= xi && p2 <= xf){
+                if(p4 >= yi && p4 <= yf){
+                    p2valid = true;
+                    p4valid = true;
+                    
+                    var msg03 = "p2(x): " + xi + " <= " + p2 + " <= " + xf;
+                    var msg04 = "p4(y): " + yi + " <= " + p4 + " <= " + yf;
+                    Debug.debugMessage(3, msg03);
+                    Debug.debugMessage(4, msg04);
+                }
+            } 
+        }
+                
+        if(p1valid && p2valid && p3valid && p4valid){
+            break;
+        }
+    }
+    
+    return p1valid && p2valid && p3valid && p4valid;
+    
+}
+
+function isNextPositionValid2(currentPosition, nextPosition, checkFuture) {
     var castedCurrentPos = UiElement('','','');
     var castedNextPos = UiElement('','','');
     
