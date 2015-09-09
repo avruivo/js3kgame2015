@@ -339,9 +339,6 @@ var Draw = {
                 var mapElement = getCellFromUiElement(levelMatrix, currElem);
                 //Draw.cell(mapElement, ctx, true);
                 
-                
-                currElem.x = movedElement.x;
-                currElem.y = movedElement.y;
                 currElem.vx = movedElement.vx;
                 currElem.vy = movedElement.vy;
                 
@@ -361,12 +358,13 @@ var Draw = {
             
             var next = Object.create( currElem );//UiElement('','','');
             
-            // next.x += next.vx;
-            // next.y += next.vy;            
-            // if(isNextPositionValid(currElem, next, false)){
-            //     currElem.x += currElem.vx;
-            //     currElem.y += currElem.vy;
-            // }
+             next.x += next.vx;
+             next.y += next.vy;            
+             if(isNextPositionValid(currElem, next))
+             {
+                 currElem.x += currElem.vx;
+                 currElem.y += currElem.vy;
+             }
             
             
 
@@ -658,12 +656,11 @@ function isNextPositionValid2(currentPosition, nextPosition, checkFuture) {
     }
     
     var msg04 = "xDiffManual: " + xDiffManual + "; yDiffManual: " + yDiffManual;
-    //msg04 = "COUNTER:" + counter;;
     Debug.debugMessage(4, msg04);
     
     
     var moveLogicX = floorOrCeilLogic(xDiffManual);
-    var moveLogicY = floorOrCeilLogic(1*yDiffManual);
+    var moveLogicY = floorOrCeilLogic(yDiffManual);
     
     
     var cellToFind = Cell('','','');
