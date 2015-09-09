@@ -458,67 +458,152 @@ function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
     // var p3 = castedNextPos.y;
     // var p4 = castedNextPos.y + (yDiff * GameCfg.uiElementsLength);
     
+    var nextCellMinusOne = -1;
+    
     var p1 = castedNextPos.x;
-    var p2 = castedNextPos.x + GameCfg.uiElementsLength;
+    var p2 = castedNextPos.x + GameCfg.uiElementsLength -1;
     var p3 = castedNextPos.y;
-    var p4 = castedNextPos.y + GameCfg.uiElementsLength;
+    var p4 = castedNextPos.y + GameCfg.uiElementsLength -1;
     
     var p1valid, p2valid, p3valid, p4valid = false;
+    //var p1p2valid, p2p3valid, p3p4valid, p4p1valid = false;
+    
+    var minCellX, minCellY;
+    var maxCellX, maxCellY;
+    
+    
+    
+    
+    minCellX = Math.floor(castedNextPos.x / GameCfg.uiElementsLength);
+    minCellY = Math.floor(castedNextPos.y / GameCfg.uiElementsLength);
+    
+    
+    //var auxMultiple = castedNextPos.x + GameCfg.uiElementsLength;
+    maxCellX = Math.floor( (castedNextPos.x + GameCfg.uiElementsLength + nextCellMinusOne) / GameCfg.uiElementsLength);
+    maxCellY = Math.floor( (castedNextPos.y + GameCfg.uiElementsLength + nextCellMinusOne) / GameCfg.uiElementsLength);
+    
+    var foundMin, foundMax = false;
+    // if(xDiff != 0)
+    // {
+    //     var xx = castedNextPos.x;
+    //     if(xDiff > 0){
+    //         xx = castedNextPos.x + GameCfg.uiElementsLength + nextCellMinusOne;
+    //     }
+    //     
+    //     minCellY = Math.floor(castedNextPos.y / GameCfg.uiElementsLength);
+    //     minCellX = Math.floor(xx / GameCfg.uiElementsLength);
+    //     foundMax = true;        
+    // }
+    // else if (yDiff != 0)
+    // {
+    //     var yy = castedNextPos.y;
+    //     
+    //     if(yDiff > 0){
+    //         yy = castedNextPos.y + GameCfg.uiElementsLength + nextCellMinusOne;
+    //     }
+    //     
+    //     minCellX = Math.floor(castedNextPos.x / GameCfg.uiElementsLength);
+    //     minCellY = Math.floor(yy / GameCfg.uiElementsLength);
+    //     foundMax = true;      
+    //     
+    //     // minCellX = Math.floor(castedNextPos.x / GameCfg.uiElementsLength);
+    //     // minCellY = Math.floor(castedNextPos.y / GameCfg.uiElementsLength);
+    //     // 
+    //     // maxCellX = Math.floor( (castedNextPos.x + GameCfg.uiElementsLength) / GameCfg.uiElementsLength);
+    //     // maxCellY = Math.floor( (castedNextPos.y + GameCfg.uiElementsLength) / GameCfg.uiElementsLength);
+    // }
+    
+    // var try2 = function(){
+    //     if(!foundMin){
+    //             if(cell.x == minCellX && cell.y == minCellY){
+    //                 foundMin = true;
+    //             }
+    //         }
+    //     
+    //         if(!foundMax){
+    //             if(cell.x == maxCellX && cell.y == maxCellY){
+    //                 foundMax = true;
+    //             }
+    //         }
+    //         
+    //         if(foundMin && foundMax){
+    //             //break;
+    //         }
+    // }    
+    // }
+    
+    var isValid = function(x, y, cell){
+        return cell.x == x && cell.y == y;
+    };
     
     for (var index = 0; index < validCells.length; index++) {
         var cell = Cell('','',''); 
         cell = validCells[index];
         
-        var xi = cell.x * GameCfg.uiElementsLength;
-        var xf = cell.x * GameCfg.uiElementsLength + GameCfg.uiElementsLength;
-        
-        var yi = cell.y * GameCfg.uiElementsLength;
-        var yf = cell.y * GameCfg.uiElementsLength + GameCfg.uiElementsLength;
-        
-        if(cell.x == 12 && cell.y == 16){
-            //alert(123);
-            console.log('avr;');
-        }
 
-//          p1valid = (p1 >= xi && p1 <= xf);
-//          p3valid = (p3 >= yi && p3 <= yf);
-// 
-//          p2valid = (p2 >= xi && p2 <= xf);
-//          p4valid = (p4 >= yi && p4 <= yf);
+            //CALC p1 (x):
+            var p1CellX = Math.floor(p1 / GameCfg.uiElementsLength);
+            var p1CellY = Math.floor(castedNextPos.y / GameCfg.uiElementsLength);
+            
+            //CALC p2 (x + len):
+            var p2CellX = Math.floor(p2 / GameCfg.uiElementsLength);
+            var p2CellY = Math.floor(castedNextPos.y / GameCfg.uiElementsLength);
+            
+            //CALC p3 (y):
+            var p3CellX = Math.floor(castedNextPos.x / GameCfg.uiElementsLength);
+            var p3CellY = Math.floor(p4 / GameCfg.uiElementsLength);
+            
+            //CALC p2 (x p len):
+            var p4CellX = Math.floor(p2 / GameCfg.uiElementsLength);
+            var p4CellY = Math.floor(p4 / GameCfg.uiElementsLength);
         
-        if(!p1valid){ 
-            if(p1 >= xi && p1 <= xf){
-                if(p3 >= yi && p3 <= yf){
+            //try2();
+            
+            if(!p1valid){
+                if(isValid(p1CellX, p1CellY, cell)){
                     p1valid = true;
-                    p3valid = true;
-                    
-                    var msg01 = "p1(x): " + xi + " <= " + p1 + " <= " + xf;
-                    var msg02 = "p3(y): " + yi + " <= " + p3 + " <= " + yf;
-                    Debug.debugMessage(1, msg01);
-                    Debug.debugMessage(2, msg02);
                 }
             }
-        }
-                
-        if(!p2valid){ 
-            if(p2 >= xi && p2 <= xf){
-                if(p4 >= yi && p4 <= yf){
+            
+            if(!p2valid){
+                if(isValid(p2CellX, p2CellY, cell)){
                     p2valid = true;
-                    p4valid = true;
-                    
-                    var msg03 = "p2(x): " + xi + " <= " + p2 + " <= " + xf;
-                    var msg04 = "p4(y): " + yi + " <= " + p4 + " <= " + yf;
-                    Debug.debugMessage(3, msg03);
-                    Debug.debugMessage(4, msg04);
                 }
-            } 
-        }
-                
+            }
+            
+            if(!p3valid){
+                if(isValid(p3CellX, p3CellY, cell)){
+                    p3valid = true;
+                }
+            }
+            
+            if(!p4valid){
+                if(isValid(p4CellX, p4CellY, cell)){
+                    p4valid = true;
+                }
+            }
+            
+//         var xi = cell.x * GameCfg.uiElementsLength;
+//         var xf = cell.x * GameCfg.uiElementsLength + GameCfg.uiElementsLength;
+//         
+//         var yi = cell.y * GameCfg.uiElementsLength;
+//         var yf = cell.y * GameCfg.uiElementsLength + GameCfg.uiElementsLength;
+//         
+//         if(cell.x == 12 && cell.y == 16){
+//             console.log('avr;');
+//         }
+// 
+// 
+//         
+//         // var pointAx = Math.floor(p1 / GameCfg.uiElementsLength);
+//         // var pointAy = Math.floor(p1 / GameCfg.uiElementsLength);
+//                 
         if(p1valid && p2valid && p3valid && p4valid){
             break;
         }
     }
     
+    //return foundMin && foundMax;
     return p1valid && p2valid && p3valid && p4valid;
     
 }
