@@ -171,7 +171,8 @@ function initGame() {
         };
         
         //window.setInterval(handler, timer);
-        handler();
+        //handler();
+        setTimeout(handler, timer);
     };
     
     
@@ -179,8 +180,8 @@ function initGame() {
     movingElements.push(eater);
     var ctx = c.getContext("2d");
     
-    // addGhost(23,1, 2000);
-    // addGhost(5,1, 4000);
+    addGhost(23,1, 2000);
+    addGhost(5,1, 4000);
 }
 
 function clearScreen(ctx) {
