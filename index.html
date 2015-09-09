@@ -32,6 +32,11 @@
                 </td>
                 <td class="cell2">
                     <div style="background-color:white">
+                        <div id="divDebug01"></div>
+                        <div id="divDebug02"></div>
+                        <div id="divDebug03"></div>
+                        <div id="divDebug04"></div>
+                        <div id="divDebug05"></div>
                         <ul id="debugUl"><li>Debug:</li></ul>
                     </div>
                     <div style="width:560px; text-align:center; font-weight:bold;">
@@ -64,8 +69,8 @@
     var levelMatrix = [];
     var validCells = [];
 
-    var player = null;
-
+    var _player = null;
+    var _prey = null;
 
     var xpto = -1;
     var frameCount = 0;
@@ -86,6 +91,8 @@
     var scrollLeft = true;
 
     var waves;
+    
+    var counter = 0;
 
 
     /* ---- GLOBALS (-) ----- */

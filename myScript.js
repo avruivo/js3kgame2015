@@ -33,6 +33,10 @@ var GameCfg = {
     ghostVx: 1
 }
 
+var GameVars = {
+    isChaseTime: true
+}
+
 window.onload = function () {
     init();
 }
@@ -120,7 +124,7 @@ function initGameControlls() {
             }
         };
 
-        moveLogic(player);
+        moveLogic(_prey);
     };
 
     document.onkeyup = function (e) {
@@ -153,11 +157,30 @@ function initGame() {
     var eater = Eater(13, 16);
     
 
-    player = eater;
+    _prey = eater;
+    
+    var addGhost = function(x, y, timer){
+        
+        var handler = function(){
+            var g1 = Ghost(x,y);
+            
+            g1.target1 = _prey;
+            g1.target2 = null; 
+            
+            movingElements.push(g1);    
+        };
+        
+        //window.setInterval(handler, timer);
+        handler();
+    };
+    
     
     
     movingElements.push(eater);
     var ctx = c.getContext("2d");
+    
+    // addGhost(23,1, 2000);
+    // addGhost(5,1, 4000);
 }
 
 function clearScreen(ctx) {
@@ -170,8 +193,10 @@ function updateGame() {
 
 function drawGame(ctx) {
     Draw.cells(validCells, ctx);
+    //Draw.scoreElements(); //TODO:
     Draw.uiElements(movingElements, ctx);
-    Draw.uiElement(player, ctx);
+    
+    //Draw.uiElement(_prey, ctx);
 }
 
 
@@ -244,10 +269,15 @@ var Draw = {
         }
 
         var length = GameCfg.uiElementsLength;
-
+            
+            var minus = 0;
+            if(secondCall){
+                minus = 5;
+            }
+            
         var tempx = length * element.x;
         var tempy = length * element.y;
-        ctx.fillRect(tempx, tempy, length, length);
+        ctx.fillRect(tempx, tempy, length-minus, length);
     },
     levelInit: function (matrix, ctx) {
         if (matrix && matrix.length > 0) {
@@ -287,14 +317,16 @@ var Draw = {
         for (var i in uiElementsList) {
             var currElem = UiElement('','','');
             currElem = uiElementsList[i];
-            var oldFillStyle = ctx.fillStyle;
-            ctx.fillStyle = currElem.fill;
-            //ctx.fillRect(currElem.x, currElem.y, currElem.length, currElem.length);
-
-            ctx.fillStyle = oldFillStyle;
+            
 
             var old = currElem;
-            var movedElement = calcNextPosition(currElem, true);
+            var movedElement = AI.Move(currElem);
+            
+            
+            if(currElem.cType != Enums.UiElements.eater){
+                var breakAvr = true;
+                var tst = "current: x= " + currElem.x + "; y="+ currElem.y + "; moved: x=" + movedElement.x + " y=" + movedElement.y;
+            }
             
             // logEveryFrameX('FromX: ' + currElem.x + " FromY: " + currElem.y, 60);
             // logEveryFrameX('To__X: ' + movedElement.x + " To__Y: " + movedElement.y, 60);
@@ -305,10 +337,8 @@ var Draw = {
             if(isNextPositionValid(currElem, movedElement, checkFuture)){
                 //var mapElement = levelMatrix[currElem.cellX, currElem.cellY];
                 var mapElement = getCellFromUiElement(levelMatrix, currElem);
-                Draw.cell(mapElement, ctx);
+                //Draw.cell(mapElement, ctx, true);
                 
-                //currElem.x = movedElement.x;
-                //currElem.y = movedElement.y;
                 currElem.vx = movedElement.vx;
                 currElem.vy = movedElement.vy;
                 
@@ -324,20 +354,23 @@ var Draw = {
                 logEveryFrameX('position not allowed!', 60);
             }
             
+            Draw.uiElement(currElem, ctx);
+            
             var next = Object.create( currElem );//UiElement('','','');
             
-            next.x += next.vx;
-            next.y += next.vy;            
-            if(isNextPositionValid(currElem, next, false)){
-                currElem.x += currElem.vx;
-                currElem.y += currElem.vy;
-            }
+             next.x += next.vx;
+             next.y += next.vy;            
+             if(isNextPositionValid(currElem, next))
+             {
+                 currElem.x += currElem.vx;
+                 currElem.y += currElem.vy;
+             }
             
             
 
             //uiElementsList[i] = movedElement;
 
-            return;
+            continue;
             // if(currElem.eType == UiElements.eater){
             //     
             // }
@@ -412,6 +445,168 @@ function calcNextPosition(element, allowDirectionChanging) {
 }
 
 function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
+    var castedNextPos = UiElement('','',''); castedNextPos = nextPosition;
+    var castedCurrentPos = UiElement('','',''); castedCurrentPos = currentPosition;
+    
+    var xDiff = castedNextPos.x - castedCurrentPos.x;
+    var yDiff = castedNextPos.y - castedCurrentPos.y;
+    
+    // var p1 = castedNextPos.x;
+    // var p2 = castedNextPos.x + (xDiff * GameCfg.uiElementsLength);
+    // var p3 = castedNextPos.y;
+    // var p4 = castedNextPos.y + (yDiff * GameCfg.uiElementsLength);
+    
+    var nextCellMinusOne = -1;
+    
+    var p1 = castedNextPos.x;
+    var p2 = castedNextPos.x + GameCfg.uiElementsLength -1;
+    var p3 = castedNextPos.y;
+    var p4 = castedNextPos.y + GameCfg.uiElementsLength -1;
+    
+    var p1valid, p2valid, p3valid, p4valid = false;
+    //var p1p2valid, p2p3valid, p3p4valid, p4p1valid = false;
+    
+    var minCellX, minCellY;
+    var maxCellX, maxCellY;
+    
+    
+    
+    
+    minCellX = Math.floor(castedNextPos.x / GameCfg.uiElementsLength);
+    minCellY = Math.floor(castedNextPos.y / GameCfg.uiElementsLength);
+    
+    
+    //var auxMultiple = castedNextPos.x + GameCfg.uiElementsLength;
+    maxCellX = Math.floor( (castedNextPos.x + GameCfg.uiElementsLength + nextCellMinusOne) / GameCfg.uiElementsLength);
+    maxCellY = Math.floor( (castedNextPos.y + GameCfg.uiElementsLength + nextCellMinusOne) / GameCfg.uiElementsLength);
+    
+    var foundMin, foundMax = false;
+    // if(xDiff != 0)
+    // {
+    //     var xx = castedNextPos.x;
+    //     if(xDiff > 0){
+    //         xx = castedNextPos.x + GameCfg.uiElementsLength + nextCellMinusOne;
+    //     }
+    //     
+    //     minCellY = Math.floor(castedNextPos.y / GameCfg.uiElementsLength);
+    //     minCellX = Math.floor(xx / GameCfg.uiElementsLength);
+    //     foundMax = true;        
+    // }
+    // else if (yDiff != 0)
+    // {
+    //     var yy = castedNextPos.y;
+    //     
+    //     if(yDiff > 0){
+    //         yy = castedNextPos.y + GameCfg.uiElementsLength + nextCellMinusOne;
+    //     }
+    //     
+    //     minCellX = Math.floor(castedNextPos.x / GameCfg.uiElementsLength);
+    //     minCellY = Math.floor(yy / GameCfg.uiElementsLength);
+    //     foundMax = true;      
+    //     
+    //     // minCellX = Math.floor(castedNextPos.x / GameCfg.uiElementsLength);
+    //     // minCellY = Math.floor(castedNextPos.y / GameCfg.uiElementsLength);
+    //     // 
+    //     // maxCellX = Math.floor( (castedNextPos.x + GameCfg.uiElementsLength) / GameCfg.uiElementsLength);
+    //     // maxCellY = Math.floor( (castedNextPos.y + GameCfg.uiElementsLength) / GameCfg.uiElementsLength);
+    // }
+    
+    // var try2 = function(){
+    //     if(!foundMin){
+    //             if(cell.x == minCellX && cell.y == minCellY){
+    //                 foundMin = true;
+    //             }
+    //         }
+    //     
+    //         if(!foundMax){
+    //             if(cell.x == maxCellX && cell.y == maxCellY){
+    //                 foundMax = true;
+    //             }
+    //         }
+    //         
+    //         if(foundMin && foundMax){
+    //             //break;
+    //         }
+    // }    
+    // }
+    
+    var isValid = function(x, y, cell){
+        return cell.x == x && cell.y == y;
+    };
+    
+    for (var index = 0; index < validCells.length; index++) {
+        var cell = Cell('','',''); 
+        cell = validCells[index];
+        
+
+            //CALC p1 (x):
+            var p1CellX = Math.floor(p1 / GameCfg.uiElementsLength);
+            var p1CellY = Math.floor(castedNextPos.y / GameCfg.uiElementsLength);
+            
+            //CALC p2 (x + len):
+            var p2CellX = Math.floor(p2 / GameCfg.uiElementsLength);
+            var p2CellY = Math.floor(castedNextPos.y / GameCfg.uiElementsLength);
+            
+            //CALC p3 (y):
+            var p3CellX = Math.floor(castedNextPos.x / GameCfg.uiElementsLength);
+            var p3CellY = Math.floor(p4 / GameCfg.uiElementsLength);
+            
+            //CALC p2 (x p len):
+            var p4CellX = Math.floor(p2 / GameCfg.uiElementsLength);
+            var p4CellY = Math.floor(p4 / GameCfg.uiElementsLength);
+        
+            //try2();
+            
+            if(!p1valid){
+                if(isValid(p1CellX, p1CellY, cell)){
+                    p1valid = true;
+                }
+            }
+            
+            if(!p2valid){
+                if(isValid(p2CellX, p2CellY, cell)){
+                    p2valid = true;
+                }
+            }
+            
+            if(!p3valid){
+                if(isValid(p3CellX, p3CellY, cell)){
+                    p3valid = true;
+                }
+            }
+            
+            if(!p4valid){
+                if(isValid(p4CellX, p4CellY, cell)){
+                    p4valid = true;
+                }
+            }
+            
+//         var xi = cell.x * GameCfg.uiElementsLength;
+//         var xf = cell.x * GameCfg.uiElementsLength + GameCfg.uiElementsLength;
+//         
+//         var yi = cell.y * GameCfg.uiElementsLength;
+//         var yf = cell.y * GameCfg.uiElementsLength + GameCfg.uiElementsLength;
+//         
+//         if(cell.x == 12 && cell.y == 16){
+//             console.log('avr;');
+//         }
+// 
+// 
+//         
+//         // var pointAx = Math.floor(p1 / GameCfg.uiElementsLength);
+//         // var pointAy = Math.floor(p1 / GameCfg.uiElementsLength);
+//                 
+        if(p1valid && p2valid && p3valid && p4valid){
+            break;
+        }
+    }
+    
+    //return foundMin && foundMax;
+    return p1valid && p2valid && p3valid && p4valid;
+    
+}
+
+function isNextPositionValid2(currentPosition, nextPosition, checkFuture) {
     var castedCurrentPos = UiElement('','','');
     var castedNextPos = UiElement('','','');
     
@@ -436,18 +631,51 @@ function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
             }
         });
     
+    var msg01 = "xDiff: " + xDiff + "; yDiff: " + yDiff;
+    Debug.debugMessage(1, msg01);
+    var msg02 = "(castedNextPos.DIR: "+ castedNextPos.direction + ";  castedNextPos.NDIR: " + castedNextPos.nextDirection + "); --||-- (castedCurrentPos.DIR: " + castedCurrentPos.direction + "; castedCurrentPos.NDIR: " + castedCurrentPos.nextDirection + ")";
+    Debug.debugMessage(2, msg02);
+    
+    var msg03 = "castedCurrentPos.x: " + castedCurrentPos.x + "; castedNextPos.x: " + castedNextPos.x
+    + "castedCurrentPos.y: " + castedCurrentPos.y + "; castedNextPos.y: " + castedNextPos.y;
+    Debug.debugMessage(3, msg03);
+    
+    var xDiffManual = 0;
+    var yDiffManual = 0;
+    
+    if(castedNextPos.nextDirection == Enums.Directions.RIGHT || castedCurrentPos.direction == Enums.Directions.RIGHT){
+        xDiffManual = 1;
+    }else if (castedNextPos.nextDirection == Enums.Directions.LEFT || castedCurrentPos.direction == Enums.Directions.LEFT){
+        xDiffManual = -1;
+    }
+    
+    if(castedNextPos.nextDirection == Enums.Directions.UP || castedCurrentPos.direction == Enums.Directions.UP){
+        yDiffManual = -1;
+    }else if (castedNextPos.nextDirection == Enums.Directions.DOWN || castedCurrentPos.direction == Enums.Directions.DOWN){
+        yDiffManual = 1;
+    }
+    
+    var msg04 = "xDiffManual: " + xDiffManual + "; yDiffManual: " + yDiffManual;
+    Debug.debugMessage(4, msg04);
+    
+    
+    var moveLogicX = floorOrCeilLogic(xDiffManual);
+    var moveLogicY = floorOrCeilLogic(yDiffManual);
+    
+    
     var cellToFind = Cell('','','');
     if(Math.abs(xDiff) >= 1) {
-        cellToFind.y = Math.round(castedNextPos.y/GameCfg.uiElementsLength);
-        var moveLogicX = floorOrCeilLogic(xDiff);        
-        cellToFind.x = moveLogicX(castedNextPos.x/GameCfg.uiElementsLength)+xDiff;
+        //cellToFind.y = Math.floor(castedNextPos.y/GameCfg.uiElementsLength);
+        cellToFind.y = moveLogicY((castedNextPos.y - yDiff)/GameCfg.uiElementsLength) + yDiff;
+        cellToFind.x = moveLogicX((castedNextPos.x - xDiff)/GameCfg.uiElementsLength) + xDiff;
     }
     
     if(Math.abs(yDiff) >= 1){
-        cellToFind.x = Math.round(castedNextPos.x/GameCfg.uiElementsLength);
-        var moveLogicY = floorOrCeilLogic(yDiff);
-        cellToFind.y = moveLogicY(castedNextPos.y/GameCfg.uiElementsLength)+yDiff;
+        //cellToFind.x = Math.ceil(castedNextPos.x/GameCfg.uiElementsLength);
+        cellToFind.x = moveLogicX((castedNextPos.x - xDiff)/GameCfg.uiElementsLength) + xDiff;
+        cellToFind.y = moveLogicY((castedNextPos.y - yDiff)/GameCfg.uiElementsLength) + yDiff;
     }
+    
     
     for (var index = 0; index < validCells.length; index++) {
         var cell = Cell('','',''); 
@@ -459,7 +687,12 @@ function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
         if(cell.x == cellToFind.x && cell.y == cellToFind.y){
             
             if(checkFuture){
-                logEveryFrameX("DiffX: " + xDiff + "; cell.x: " + cell.x + "; cell.y: " + cell.y, 60);
+                counter++;
+                var mmsg = "DiffX: " + xDiff + "; cell.x: " + cell.x + "; cell.y: " + cell.y;
+                logEveryFrameX(mmsg, 60);
+                if(counter == 100){
+                    //alert(mmsg + "; Counter: " + counter);
+                }
             }
             return true;
         }
@@ -557,7 +790,11 @@ function Eater(x, y) {
 function Ghost(x, y, eType) {
     var elem = UiElement(x, y, eType);
     elem.fill = Enums.Colors.red;
+    elem.cType = Enums.UiElements.ghost;
 
+    elem.target1 = null;
+    elem.target2 = null;
+    
     return elem;
 }
 
@@ -599,5 +836,80 @@ var Debug = {
         var oldStyle = ctx.fillStyle;
         ctx.fillText(name + ": " + value, 20, 20); 
         ctx.fillStyle = oldStyle;
+    },
+    debugMessage: function(count, message){        
+        var divId = "divDebug0" + count;
+        var debugDiv = document.getElementById(divId);
+        debugDiv.innerText = message;
+    }
+}
+
+var AI = {
+    Move: function(elem){
+        var casted = UiElement('','','');
+        casted = elem;
+        
+        if(casted.cType == Enums.UiElements.ghost){
+            return AI.MoveGhost(elem);
+        }else{
+            return AI.MoveEater(elem);
+        }
+    },
+    
+    MoveGhost: function(elem){
+        var casted = UiElement('','',''); casted = casted = Object.create( elem );
+        var target = UiElement('','',''); target = casted.target1;
+        
+        
+        var calcMiddle = function(value) {
+            return value + (GameCfg.uiElementsLength / 2);
+        };
+            
+        
+        var targetMiddleX = calcMiddle(target.x); 
+        var targetMiddleY = calcMiddle(target.y);
+        
+        var elemMiddleX = calcMiddle(casted.x);
+        var elemMiddleY = calcMiddle(casted.y);
+
+        var xDiff = elemMiddleX - targetMiddleX;
+        var yDiff = elemMiddleY - targetMiddleY;
+        
+        if(Math.abs(xDiff) > 0 && elem.vx == 0){
+            if(xDiff < 0){
+                casted.nextDirection = Enums.Directions.RIGHT;
+                casted.vx = GameCfg.ghostVx;
+                casted.vy = 0;
+            }else{
+                casted.nextDirection = Enums.Directions.LEFT;
+                casted.vx = GameCfg.ghostVx*-1;
+                casted.vy = 0;
+            }
+        }else if(Math.abs(yDiff) > 0 && elem.vy == 0){
+            if(yDiff < 0){
+                casted.nextDirection = Enums.Directions.DOWN;
+                casted.vy = GameCfg.ghostVx;
+                casted.vx = 0;
+            }else{
+                casted.nextDirection = Enums.Directions.UP;
+                casted.vy = GameCfg.ghostVx*-1;
+                casted.vx = 0;
+            }
+        }
+        
+        //if it's the first time
+        if(!casted.direction){
+            casted.direction = casted.nextDirection;
+        }
+        
+        casted.x += casted.vx;
+        casted.y += casted.vy;
+        
+        return casted;
+    },
+    
+    MoveEater: function(elem){
+        var currElem = UiElement('','',''); currElem = elem;
+        return calcNextPosition(currElem, true);
     }
 }
