@@ -122,9 +122,26 @@ function initGameControlls() {
             if(!casted.direction){
                 //casted.direction = casted.nextDirection;
             }
+            
+            document.getElementById("btnLeft").addEventListener('click', function () {
+                casted.nextDirection = Enums.Directions.LEFT;
+            }, false);
+            
+            document.getElementById("btnRight").addEventListener('click', function () {
+                casted.nextDirection = Enums.Directions.RIGHT;
+            }, false);
+            
+            document.getElementById("btnUp").addEventListener('click', function () {
+                casted.nextDirection = Enums.Directions.UP;
+            }, false);
+            
+            document.getElementById("btnDown").addEventListener('click', function () {
+                casted.nextDirection = Enums.Directions.DOWN;
+            }, false);
         };
 
         moveLogic(_prey);
+        
     };
 
     document.onkeyup = function (e) {
