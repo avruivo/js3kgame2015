@@ -33,8 +33,15 @@ var GameCfg = {
     ghostVx: 1
 }
 
-var GameVars = {
-    isChaseTime: true
+var GameLogic = {
+    isChaseTime: true,
+    checkColisions: function(currentUiElement){
+        for (var elemI = 0; elem < currentUiElement.length; currentUiElement++) {
+            var elem = currentUiElement[elemI];
+        }
+            
+            //currentUiElement
+    }
 }
 
 window.onload = function () {
@@ -135,19 +142,35 @@ function initGameControlls() {
         onkey(1, e);
     };
     
+    //LEFT
     document.getElementById("btnLeft").addEventListener('click', function () {
         _prey.nextDirection = Enums.Directions.LEFT;
     }, false);
+    document.getElementById("btnLeft").parentElement.addEventListener('click', function () {
+        _prey.nextDirection = Enums.Directions.LEFT;
+    }, false);
     
+    //RIGHT
     document.getElementById("btnRight").addEventListener('click', function () {
         _prey.nextDirection = Enums.Directions.RIGHT;
     }, false);
+    document.getElementById("btnRight").parentElement.addEventListener('click', function () {
+        _prey.nextDirection = Enums.Directions.RIGHT;
+    }, false);
     
+    //UP
     document.getElementById("btnUp").addEventListener('click', function () {
         _prey.nextDirection = Enums.Directions.UP;
     }, false);
+    document.getElementById("btnUp").parentElement.addEventListener('click', function () {
+        _prey.nextDirection = Enums.Directions.UP;
+    }, false);
     
+    //DOWN
     document.getElementById("btnDown").addEventListener('click', function () {
+        _prey.nextDirection = Enums.Directions.DOWN;
+    }, false);
+    document.getElementById("btnDown").parentElement.addEventListener('click', function () {
         _prey.nextDirection = Enums.Directions.DOWN;
     }, false);
 }
@@ -385,7 +408,7 @@ var Draw = {
              }
             
             
-
+            
             //uiElementsList[i] = movedElement;
 
             continue;
@@ -624,139 +647,6 @@ function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
     
 }
 
-function isNextPositionValid2(currentPosition, nextPosition, checkFuture) {
-    var castedCurrentPos = UiElement('','','');
-    var castedNextPos = UiElement('','','');
-    
-    castedCurrentPos = currentPosition;
-    castedNextPos = nextPosition;
-    
-    var xDiff = castedNextPos.x - castedCurrentPos.x;
-    var yDiff = castedNextPos.y - castedCurrentPos.y;
-    
-    //var validCells = [];
-    //validCells = getValidCellsToMoveTo(castedCurrentPos, castedNextPos);
-    
-    var floorOrCeilLogic = (function(diff) {
-            if(diff >= 0){
-                return function(arg){
-                    return Math.floor(arg);
-                };
-            }else{
-                return function(arg){
-                    return Math.ceil(arg);
-                };
-            }
-        });
-    
-    var msg01 = "xDiff: " + xDiff + "; yDiff: " + yDiff;
-    Debug.debugMessage(1, msg01);
-    var msg02 = "(castedNextPos.DIR: "+ castedNextPos.direction + ";  castedNextPos.NDIR: " + castedNextPos.nextDirection + "); --||-- (castedCurrentPos.DIR: " + castedCurrentPos.direction + "; castedCurrentPos.NDIR: " + castedCurrentPos.nextDirection + ")";
-    Debug.debugMessage(2, msg02);
-    
-    var msg03 = "castedCurrentPos.x: " + castedCurrentPos.x + "; castedNextPos.x: " + castedNextPos.x
-    + "castedCurrentPos.y: " + castedCurrentPos.y + "; castedNextPos.y: " + castedNextPos.y;
-    Debug.debugMessage(3, msg03);
-    
-    var xDiffManual = 0;
-    var yDiffManual = 0;
-    
-    if(castedNextPos.nextDirection == Enums.Directions.RIGHT || castedCurrentPos.direction == Enums.Directions.RIGHT){
-        xDiffManual = 1;
-    }else if (castedNextPos.nextDirection == Enums.Directions.LEFT || castedCurrentPos.direction == Enums.Directions.LEFT){
-        xDiffManual = -1;
-    }
-    
-    if(castedNextPos.nextDirection == Enums.Directions.UP || castedCurrentPos.direction == Enums.Directions.UP){
-        yDiffManual = -1;
-    }else if (castedNextPos.nextDirection == Enums.Directions.DOWN || castedCurrentPos.direction == Enums.Directions.DOWN){
-        yDiffManual = 1;
-    }
-    
-    var msg04 = "xDiffManual: " + xDiffManual + "; yDiffManual: " + yDiffManual;
-    Debug.debugMessage(4, msg04);
-    
-    
-    var moveLogicX = floorOrCeilLogic(xDiffManual);
-    var moveLogicY = floorOrCeilLogic(yDiffManual);
-    
-    
-    var cellToFind = Cell('','','');
-    if(Math.abs(xDiff) >= 1) {
-        //cellToFind.y = Math.floor(castedNextPos.y/GameCfg.uiElementsLength);
-        cellToFind.y = moveLogicY((castedNextPos.y - yDiff)/GameCfg.uiElementsLength) + yDiff;
-        cellToFind.x = moveLogicX((castedNextPos.x - xDiff)/GameCfg.uiElementsLength) + xDiff;
-    }
-    
-    if(Math.abs(yDiff) >= 1){
-        //cellToFind.x = Math.ceil(castedNextPos.x/GameCfg.uiElementsLength);
-        cellToFind.x = moveLogicX((castedNextPos.x - xDiff)/GameCfg.uiElementsLength) + xDiff;
-        cellToFind.y = moveLogicY((castedNextPos.y - yDiff)/GameCfg.uiElementsLength) + yDiff;
-    }
-    
-    
-    for (var index = 0; index < validCells.length; index++) {
-        var cell = Cell('','',''); 
-        cell = validCells[index];
-        
-        // if(isValidCellToMoveTo(castedCurrentPos, castedNextPos, cell)){
-        //     return true;  
-        // }
-        if(cell.x == cellToFind.x && cell.y == cellToFind.y){
-            
-            if(checkFuture){
-                counter++;
-                var mmsg = "DiffX: " + xDiff + "; cell.x: " + cell.x + "; cell.y: " + cell.y;
-                logEveryFrameX(mmsg, 60);
-                if(counter == 100){
-                    //alert(mmsg + "; Counter: " + counter);
-                }
-            }
-            return true;
-        }
-    }
-    
-    return false;
-}
-
-// function isValidCellToMoveTo(currentPosition, nextPosition, cell){
-//     var castedCurrentPos = UiElement('','','');
-//     var castedNextPos = UiElement('','','');
-//     
-//     var validX = (castedCurrentPos.x >= cell.x)  
-//         && (castedNextPos.x + GameCfg.uiElementsLength >= cell.x + GameCfg.uiElementsLength) 
-//         && (cell.y == castedCurrentPos.y)
-//         && (cell.cType != Enums.UiElements.wall);
-// 
-//         return validX;
-//     
-// }
-
-// function getValidCellsToMoveTo(currentPosition, nextPosition){
-//     var castedCurrentPos = UiElement('','','');
-//     var castedNextPos = UiElement('','','');
-//     
-//     castedCurrentPos = currentPosition;
-//     castedNextPos = nextPosition;
-//     
-//     var validCells = [];
-//     for (var index = 0; index < levelMatrix.length; index++) {
-//         var cell = Cell('','','');
-//         cell = levelMatrix[index];
-//         
-//         
-//         if(isValidCellToMoveTo(castedCurrentPos, castedNextPos, cell)){
-//             validCells.push(cell);
-//         }
-//         
-//         //else if()
-//         
-//     }
-//     
-//     return validCells;
-// }
-
-
 function Shape(x, y, w, h, fill, vx, vy, name) {
     this.x = x;
     this.y = y;
@@ -790,8 +680,10 @@ function UiElement(x, y, eType) {
         "direction": null, 
         "nextDirection": null, 
         //"nextDirectionToBe": null,
-        "fill": Enums.Colors.blue
-         
+        "fill": Enums.Colors.blue,
+        "hit" : function(hitter){ 
+            
+                }
         };
 }
 

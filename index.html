@@ -24,6 +24,10 @@
             padding:20px;
             margin:10px;
         }
+        
+        .tdController:hover{
+            background-color:yellow;
+        }
     </style>
 
 
@@ -56,16 +60,16 @@
                             <table border=1>
                                 <tbody>
                                     <tr>
-                                        <td colspan="2" align="center">
+                                        <td colspan="2" align="center" class="tdController">
                                             <button id="btnUp" class="btnController">UP</button>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td><button id="btnLeft" class="btnController">LEFT</button></td>
-                                        <td><button id="btnRight" class="btnController">RIGHT</button></td>
+                                        <td class="tdController"><button id="btnLeft" class="btnController">LEFT</button></td>
+                                        <td class="tdController"><button id="btnRight" class="btnController">RIGHT</button></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="2" align="center">
+                                        <td colspan="2" align="center" class="tdController">
                                             <button id="btnDown" class="btnController">DOWN</button>
                                         </td>
                                     </tr>
