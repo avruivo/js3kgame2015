@@ -317,6 +317,9 @@ function initGame() {
     var ghostsCounter = 1;
     //addGhost(23, 1, 2000, ghostsCounter++);
     //addGhost(5,  1, 4000, ghostsCounter++);
+    
+    addGhost(11, 5, 3000, ghostsCounter++);
+    //addGhost(15, 26, 3000, ghostsCounter++);
 }
 
 function clearScreen(ctx) {
