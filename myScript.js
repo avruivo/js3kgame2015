@@ -25,13 +25,15 @@ var Enums = {
 }
 var GameCfg = {
     uiElementsLength: 20,
+    scoreLength: 3,
     lineBreakToken: '|',
     showBoundingBoxs: false,
     opacity: 0.8,
 
     eaterVx: 2,
     ghostVx: 1,
-    lives: 3
+    lives: 3,
+    normalCellScore: 1
 }
 
 var GameLogic = {
@@ -75,7 +77,10 @@ var GameLogic = {
                             }
                         }
                         
-                        
+                        //if is eater, then check score collisions
+                        if(elem1.cType == Enums.UiElements.eater){
+                            
+                        }
                     }
                 }
             }
@@ -292,7 +297,7 @@ function updateGame() {
 function drawGame(ctx) {
     Debug.writeText(ctx, 10, 10, "teste", "avr");
     Draw.cells(validCells, ctx);
-    //Draw.scoreElements(); //TODO:
+    //Draw.scoreElements(validCells, ctx); //TODO:
     Draw.uiElements(movingElements, ctx);
     
     //Draw.uiElement(_prey, ctx);
@@ -345,7 +350,15 @@ var Draw = {
     },
     cell: function(element, ctx, secondCall){
         var casted = Cell('','','');
-        casted = element; 
+        casted = element;
+        
+        var hasScore = false;
+        var drawScore = function(hasScore){
+            if(hasScore)
+            {
+                Draw.scoreElement(element.x, element.y, ctx);
+            };
+        };
 
         if (element.cType == "W") {
             
@@ -355,6 +368,7 @@ var Draw = {
             ctx.fillStyle = Enums.Colors.darkBlue;
         } else if (element.cType == "o") {
             ctx.fillStyle = Enums.Colors.white;
+            hasScore = (casted.score > 0);
         }
         else {
             ctx.fillStyle = Enums.Colors.red;
@@ -372,6 +386,30 @@ var Draw = {
         var tempx = length * element.x;
         var tempy = length * element.y;
         ctx.fillRect(tempx, tempy, length-minus, length);
+        
+        drawScore(hasScore);
+        
+        
+    },
+    scoreElement: function(x, y, ctx){
+        
+        var tempx = (x + (1/2)) * GameCfg.uiElementsLength;
+        var tempy = (y + (1/2)) * GameCfg.uiElementsLength;
+        
+        
+        ctxHelper.fillRect2(tempx, tempy, GameCfg.scoreLength, GameCfg.scoreLength, Enums.Colors.red, ctx);
+    },
+    scoreElement2: function(x, y, ctx){
+        //var casted = Cell('','','');
+        //casted = element; 
+            var length = GameCfg.uiElementsLength;
+            var tempx = x + (x/2); //- (GameCfg.scoreLength / 2);
+            var tempy = y + (y/2); //- (GameCfg.scoreLength / 2);
+            
+            // tempx = (tempx/2) - (GameCfg.scoreLength / 2);
+            // tempy = (tempy/2) - (GameCfg.scoreLength / 2);
+        
+            ctxHelper.fillRect2(tempx, tempy, GameCfg.scoreLength, GameCfg.scoreLength, Enums.Colors.red, ctx);
     },
     levelInit: function (matrix, ctx) {
         if (matrix && matrix.length > 0) {
@@ -725,7 +763,7 @@ function Shape(x, y, w, h, fill, vx, vy, name) {
 }
 
 function Cell(x, y, cType) {
-    return { "x": x, "y": y, "cType": cType };
+    return { "x": x, "y": y, "cType": cType , "score" : GameCfg.normalCellScore };
 }
 
 function UiElement(x, y, eType) {
@@ -770,7 +808,7 @@ function Eater(x, y) {
         if(this.lives > 0){
             if(casted.cType == Enums.UiElements.ghost){
                 this.lives-= 1;
-                alert(msg);
+                //alert(msg);
             }
         }else{
             GameLogic.gameOver();
@@ -805,6 +843,13 @@ var ctxHelper = {
         var oldStyle = ctx.fillStyle;
         ctx.fillStyle = uiElem.fill;
         ctx.fillRect(uiElem.x, uiElem.y, uiElem.length, uiElem.length); 
+        ctx.fillStyle = oldStyle;
+    },
+    
+    fillRect2: function(x, y, lengthX, lengthY, fillColor, ctx){
+        var oldStyle = ctx.fillStyle;
+        ctx.fillStyle = fillColor;
+        ctx.fillRect(x, y, lengthX, lengthY); 
         ctx.fillStyle = oldStyle;
     }   
 }
