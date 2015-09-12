@@ -30,7 +30,8 @@ var GameCfg = {
     opacity: 0.8,
 
     eaterVx: 2,
-    ghostVx: 1
+    ghostVx: 1,
+    lives: 3
 }
 
 var GameLogic = {
@@ -81,6 +82,11 @@ var GameLogic = {
         }
             
             //currentUiElement
+    },
+    
+    gameOver(){
+        clearMainInterval();
+        alert("Game is over!");
     }
 }
 
@@ -331,16 +337,6 @@ var Level = {
 }
 
 var Draw = {
-//     hpBar: function (ctx) {
-//         for (var i = 0; i < 5; i++) {
-//             if (true)
-//                 ctx.fillStyle = Enums.Colors.blue;
-//             else
-//                 ctx.fillStyle = Enums.Colors.red;
-//             ctx.fillRect(100 + i * 25, 16, 15, 15);
-//         }
-// 
-//     },
     cells: function(matrix, ctx){
         Draw.levelInit(matrix, ctx);
     },
@@ -486,6 +482,16 @@ var Draw = {
         
         //Debug.writeText(ctx, 10, 10, "teste", "avr");
     }
+//     ,hpBar: function (ctx) {
+//         for (var i = 0; i < GameCfg.lives; i++) {
+//             if (true)
+//                 ctx.fillStyle = Enums.Colors.blue;
+//             else
+//                 ctx.fillStyle = Enums.Colors.red;
+//             ctx.fillRect(100 + i * 25, 16, 15, 15);
+//         }
+// 
+//     },
 }
 
 function calcNextPosition(element, allowDirectionChanging) {
@@ -748,11 +754,21 @@ function Eater(x, y) {
     //elem.vx = GameCfg.eaterVx;
     //elem.vy = GameCfg.eaterVx
     
+    elem.lives = GameCfg.lives;
+    
     elem.hit = function(hitter){
         var casted = UiElement('','',''); casted = hitter;
-        if(casted.cType == Enums.UiElements.ghost){
-            alert('Loose 1 life');
+        var temp = elem.lives-1;
+        var msg = 'Loose 1 life ('+temp+' of '+GameCfg.lives+')';
+        if(this.lives > 0){
+            if(casted.cType == Enums.UiElements.ghost){
+                this.lives-= 1;
+                alert(msg);
+            }
+        }else{
+            GameLogic.gameOver();
         }
+        console.log(msg);
     }
 
     return elem;
