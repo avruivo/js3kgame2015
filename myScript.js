@@ -57,13 +57,14 @@ var GameLogic = {
     return false;
     
     },
-    checkCollisions: function(movingElements){
+    checkCollisions: function(movingElements, validCells){
         for (var elem1index = 0; elem1index < movingElements.length; elem1index++) {
             var elem1 = UiElement('','',''); elem1 = movingElements[elem1index];
             
             if(!elem1.IsCollided){
                 for (var elem2index = 0; elem2index < movingElements.length; elem2index++) {
-                    if(elem1index != elem2index){
+                    if(elem1index != elem2index)
+                    {
                         var elem2 = UiElement('','',''); elem2 = movingElements[elem2index];
                         
                         var msg = "'"+ elem1.DebugName +"' has collided with '"+ elem2.DebugName +"'.";
@@ -76,9 +77,25 @@ var GameLogic = {
                                 elem1.hit(elem2);
                             }
                         }
-                        
-                        //if is eater, then check score collisions
-                        if(elem1.cType == Enums.UiElements.eater){
+                    }
+                    
+                    //if is eater, then check score collisions
+                    if(elem1.cType == Enums.UiElements.eater){
+                        for (var cells = 0; cells < validCells.length; cells++) {
+                            var cell = Cell('','',''); cell = validCells[cells];
+                            if(cell.score > 0){
+                                if(elem1.x == 180 && elem1.y == 320 && cell.x == 9 && cell.y == 16){
+                                    console.log(123);
+                                }
+                                var dot = scoreElementFromCell(cell.x, cell.y) //scoreElementFromCell(cell.x, cell.y);
+                                
+                                var isCollision2 = GameLogic.checkColision(elem1, dot);
+                                
+                                if(isCollision2){
+                                    totalScore += cell.score;
+                                    cell.score = 0;
+                                }
+                            }
                             
                         }
                     }
@@ -93,6 +110,22 @@ var GameLogic = {
         clearMainInterval();
         alert("Game is over!");
     }
+}
+
+// function scoreElementFromUiElement(x, y){
+//     return scoreElementFromUiElement(x* GameCfg.uiElementsLength, y* GameCfg.uiElementsLength); 
+// }
+
+function scoreElementFromCell(x, y){
+    var tempx = (x + (1/2));
+    var tempy = (y + (1/2));
+    
+    var elem = UiElement(tempx, tempy, Enums.UiElements.dot); //dummy
+    //elem.cellX = elem.x * GameCfg.uiElementsLength;
+    //elem.cellY = elem.y * GameCfg.uiElementsLength;
+    elem.length = GameCfg.scoreLength;
+    
+    return elem;
 }
 
 window.onload = function () {
@@ -282,8 +315,8 @@ function initGame() {
     var ctx = c.getContext("2d");
     
     var ghostsCounter = 1;
-    addGhost(23, 1, 2000, ghostsCounter++);
-    addGhost(5,  1, 4000, ghostsCounter++);
+    //addGhost(23, 1, 2000, ghostsCounter++);
+    //addGhost(5,  1, 4000, ghostsCounter++);
 }
 
 function clearScreen(ctx) {
@@ -303,9 +336,10 @@ function drawGame(ctx) {
     //Draw.uiElement(_prey, ctx);
     
     
-    GameLogic.checkCollisions(movingElements);
+    GameLogic.checkCollisions(movingElements, validCells);
     
-    Draw.hpBar();
+    Draw.hpBar(ctx);
+    Draw.score(ctx);
 }
 
 
@@ -393,23 +427,10 @@ var Draw = {
     },
     scoreElement: function(x, y, ctx){
         
-        var tempx = (x + (1/2)) * GameCfg.uiElementsLength;
-        var tempy = (y + (1/2)) * GameCfg.uiElementsLength;
+        var scoreElem = scoreElementFromCell(x, y);
         
         
-        ctxHelper.fillRect2(tempx, tempy, GameCfg.scoreLength, GameCfg.scoreLength, Enums.Colors.red, ctx);
-    },
-    scoreElement2: function(x, y, ctx){
-        //var casted = Cell('','','');
-        //casted = element; 
-            var length = GameCfg.uiElementsLength;
-            var tempx = x + (x/2); //- (GameCfg.scoreLength / 2);
-            var tempy = y + (y/2); //- (GameCfg.scoreLength / 2);
-            
-            // tempx = (tempx/2) - (GameCfg.scoreLength / 2);
-            // tempy = (tempy/2) - (GameCfg.scoreLength / 2);
-        
-            ctxHelper.fillRect2(tempx, tempy, GameCfg.scoreLength, GameCfg.scoreLength, Enums.Colors.red, ctx);
+        ctxHelper.fillRect2(scoreElem.x, scoreElem.y, GameCfg.scoreLength, GameCfg.scoreLength, Enums.Colors.red, ctx);
     },
     levelInit: function (matrix, ctx) {
         if (matrix && matrix.length > 0) {
@@ -537,6 +558,12 @@ var Draw = {
         var elem = document.getElementById(elemId);
         elem.innerText = message;
     },
+    score: function(ctx){
+        var message = "TOTAL: " + totalScore*-1;
+        var elemId = "lblScore";
+        var elem = document.getElementById(elemId);
+        elem.innerText = message;
+    }
 }
 
 function calcNextPosition(element, allowDirectionChanging) {
@@ -766,15 +793,15 @@ function Cell(x, y, cType) {
     return { "x": x, "y": y, "cType": cType , "score" : GameCfg.normalCellScore };
 }
 
-function UiElement(x, y, eType) {
+function UiElement(cellX, cellY, eType) {
     var vx = 0; //GameCfg.ghostVx;
     var vy = 0; //GameCfg.ghostVx;
 
     return { 
-        "cellX": x, 
-        "cellY": y, 
-        "x": x*GameCfg.uiElementsLength, 
-        "y": y*GameCfg.uiElementsLength, 
+        "cellX": cellX, 
+        "cellY": cellY, 
+        "x": cellX*GameCfg.uiElementsLength, 
+        "y": cellY*GameCfg.uiElementsLength, 
         "cType": eType, 
         "length": GameCfg.uiElementsLength, 
         "vx": vx, 
