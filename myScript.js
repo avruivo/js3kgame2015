@@ -290,6 +290,7 @@ function updateGame() {
 }
 
 function drawGame(ctx) {
+    Debug.writeText(ctx, 10, 10, "teste", "avr");
     Draw.cells(validCells, ctx);
     //Draw.scoreElements(); //TODO:
     Draw.uiElements(movingElements, ctx);
@@ -298,6 +299,8 @@ function drawGame(ctx) {
     
     
     GameLogic.checkCollisions(movingElements);
+    
+    Draw.hpBar();
 }
 
 
@@ -482,16 +485,20 @@ var Draw = {
         
         //Debug.writeText(ctx, 10, 10, "teste", "avr");
     }
-//     ,hpBar: function (ctx) {
-//         for (var i = 0; i < GameCfg.lives; i++) {
-//             if (true)
-//                 ctx.fillStyle = Enums.Colors.blue;
-//             else
-//                 ctx.fillStyle = Enums.Colors.red;
-//             ctx.fillRect(100 + i * 25, 16, 15, 15);
-//         }
-// 
-//     },
+    ,hpBar: function (ctx) {
+        // for (var i = 0; i < GameCfg.lives; i++) {
+        //     if (true)
+        //         ctx.fillStyle = Enums.Colors.blue;
+        //     else
+        //         ctx.fillStyle = Enums.Colors.red;
+        //     ctx.fillRect(100 + i * 25, 16, 15, 15);
+        // }
+        
+        var message = _prey.lives + " LIVES";
+        var elemId = "lblLives";
+        var elem = document.getElementById(elemId);
+        elem.innerText = message;
+    },
 }
 
 function calcNextPosition(element, allowDirectionChanging) {
