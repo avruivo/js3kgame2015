@@ -12,7 +12,9 @@ var Enums = {
         darkBlue: '#1c5c88',
         red: "#a90000",
         black: "#000000",
-        white: "#FFFFFF"
+        white: "#FFFFFF",
+        pink: "#FF99FF",
+        aqua: "#33CCFF"
     },
     
     UiElements: {
@@ -25,16 +27,139 @@ var Enums = {
 }
 var GameCfg = {
     uiElementsLength: 20,
+    scoreLength: 3,
     lineBreakToken: '|',
     showBoundingBoxs: false,
     opacity: 0.8,
 
     eaterVx: 2,
-    ghostVx: 1
+    ghostVx: 1,
+    lives: 3,
+    normalCellScore: 1,
+    chaseTimeSeconds: 7
 }
 
-var GameVars = {
-    isChaseTime: true
+var GameLogic = {
+    isChaseTime: false,
+    setChaseTimeOn: function(value, movingElements, validCells){
+       if(value){
+           document.body.style.backgroundColor = Enums.Colors.red;
+           GameLogic.isChaseTime = true;
+           
+       } else{
+           document.body.style.backgroundColor = Enums.Colors.darkBlue;
+           GameLogic.isChaseTime = false;
+       }
+       
+       for (var elemIndex = 0; elemIndex < movingElements.length; elemIndex++) {
+           var ghost =  UiElement('','',''); ghost = movingElements[elemIndex];
+           if(ghost.cType == Enums.UiElements.ghost){
+               if(value){ //set chase time on
+                   var old = ghost.target1;
+                   ghost.target1 = _prey;
+                   old.fill = Enums.Colors.white;
+               }else{
+                   var generateRandomTarget = function(){
+                       
+                       var newTargetIndex = getRandomInt(0, validCells.length-1);
+                       var newTarget = validCells[newTargetIndex];
+                       newTarget.fill = ghost.fill;
+                       ghost.target1 = newTarget;
+                   };
+                   
+                   generateRandomTarget();
+               }
+           }
+       }
+    },
+    checkColision: function(s1, s2) {
+        var casted1 = UiElement('','',''); casted1 = s1; 
+        var casted2 = UiElement('','',''); casted2 = s2;
+       
+    if (casted1.x < casted2.x + casted2.length &&
+        casted1.x + casted1.length > casted2.x &&
+        casted1.y < casted2.y + casted2.length &&
+        casted1.length + casted1.y > casted2.y) {
+        return true;
+    }    
+    // if (s1.x < s2.x + s2.w &&
+    //     s1.x + s1.w > s2.x &&
+    //     s1.y < s2.y + s2.h &&
+    //     s1.h + s1.y > s2.y) {
+    //     return true;
+    // }
+    return false;
+    
+    },
+    checkCollisions: function(movingElements, validCells){
+        for (var elem1index = 0; elem1index < movingElements.length; elem1index++) {
+            var elem1 = UiElement('','',''); elem1 = movingElements[elem1index];
+            
+            if(!elem1.IsCollided){
+                for (var elem2index = 0; elem2index < movingElements.length; elem2index++) {
+                    if(elem1index != elem2index)
+                    {
+                        var elem2 = UiElement('','',''); elem2 = movingElements[elem2index];
+                        
+                        var msg = "'"+ elem1.DebugName +"' has collided with '"+ elem2.DebugName +"'.";
+                        if(elem1.cType == Enums.UiElements.eater 
+                            || elem2.cType == Enums.UiElements.eater){
+                            
+                            var isCollision = GameLogic.checkColision(elem1, elem2);
+                            
+                            if(isCollision){
+                                elem1.hit(elem2);
+                            }
+                        }
+                    }
+                    
+                    //if is eater, then check score collisions
+                    if(elem1.cType == Enums.UiElements.eater){
+                        for (var cells = 0; cells < validCells.length; cells++) {
+                            var cell = Cell('','',''); cell = validCells[cells];
+                            if(cell.score > 0){
+                                if(elem1.x == 180 && elem1.y == 320 && cell.x == 9 && cell.y == 16){
+                                    console.log(123);
+                                }
+                                var dot = scoreElementFromCell(cell.x, cell.y) //scoreElementFromCell(cell.x, cell.y);
+                                
+                                var isCollision2 = GameLogic.checkColision(elem1, dot);
+                                
+                                if(isCollision2){
+                                    totalScore += cell.score;
+                                    cell.score = 0;
+                                }
+                            }
+                            
+                        }
+                    }
+                }
+            }
+        }
+            
+            //currentUiElement
+    },
+    
+    gameOver(){
+        clearMainInterval();
+        alert("Game is over!");
+    }
+}
+
+// function scoreElementFromUiElement(x, y){
+//     return scoreElementFromUiElement(x* GameCfg.uiElementsLength, y* GameCfg.uiElementsLength); 
+// }
+
+function scoreElementFromCell(x, y){
+    var tempx = (x + (1/2));
+    var tempy = (y + (1/2));
+    
+    var elem = UiElement(tempx, tempy, Enums.UiElements.dot); //dummy
+    //elem.cellX = elem.x * GameCfg.uiElementsLength;
+    //elem.cellY = elem.y * GameCfg.uiElementsLength;
+    elem.length = GameCfg.scoreLength;
+    
+    return elem;
 }
 
 window.onload = function () {
@@ -125,6 +250,7 @@ function initGameControlls() {
         };
 
         moveLogic(_prey);
+        
     };
 
     document.onkeyup = function (e) {
@@ -133,10 +259,44 @@ function initGameControlls() {
     document.onkeydown = function (e) {
         onkey(1, e);
     };
+    
+    //LEFT
+    document.getElementById("btnLeft").addEventListener('click', function () {
+        _prey.nextDirection = Enums.Directions.LEFT;
+    }, false);
+    document.getElementById("btnLeft").parentElement.addEventListener('click', function () {
+        _prey.nextDirection = Enums.Directions.LEFT;
+    }, false);
+    
+    //RIGHT
+    document.getElementById("btnRight").addEventListener('click', function () {
+        _prey.nextDirection = Enums.Directions.RIGHT;
+    }, false);
+    document.getElementById("btnRight").parentElement.addEventListener('click', function () {
+        _prey.nextDirection = Enums.Directions.RIGHT;
+    }, false);
+    
+    //UP
+    document.getElementById("btnUp").addEventListener('click', function () {
+        _prey.nextDirection = Enums.Directions.UP;
+    }, false);
+    document.getElementById("btnUp").parentElement.addEventListener('click', function () {
+        _prey.nextDirection = Enums.Directions.UP;
+    }, false);
+    
+    //DOWN
+    document.getElementById("btnDown").addEventListener('click', function () {
+        _prey.nextDirection = Enums.Directions.DOWN;
+    }, false);
+    document.getElementById("btnDown").parentElement.addEventListener('click', function () {
+        _prey.nextDirection = Enums.Directions.DOWN;
+    }, false);
 }
 
 var mainloop = function () {
     var ctx = c.getContext("2d");
+
+Draw.levelInit(levelMatrix, ctx);
 
     updateGame(); //update arrays + logic
     drawGame(ctx); //draw game with updated info
@@ -144,34 +304,58 @@ var mainloop = function () {
     //currentSeconds();
 
 
-    ctx.globalAlpha = GameCfg.opacity;
+    //ctx.globalAlpha = GameCfg.opacity;
 
     //Draw.hpBar(ctx);
-    Draw.levelInit(levelMatrix, ctx);
+    
 };
 
-function initGame() {
-    levelMatrix = Level.level01();
+function initGame(livesLeft) {
+    if(!livesLeft){
+        levelMatrix = Level.level01();
+    }
     //console.log('inited Game');
 
     var eater = Eater(13, 16);
+    if(!livesLeft){
+        eater.lives = GameCfg.lives;
+    }else{
+        eater.lives = livesLeft;
+    }
     
+    movingElements = [];
 
     _prey = eater;
     
-    var addGhost = function(x, y, timer){
+    var addGhost = function(x, y, timer, ghostsNumber){
         
         var handler = function(){
-            var g1 = Ghost(x,y);
+            
+            var g1 = Ghost(x, y, name);
+            g1.DebugName ="Ghost" + ghostsNumber;
+            
+            
+            if(ghostsNumber == 1){
+                g1.fill = Enums.Colors.red;
+            }else if(ghostsNumber == 2){
+                g1.fill = Enums.Colors.pink;
+            }else if(ghostsNumber == 3){
+                g1.fill = Enums.Colors.aqua;
+            }else if(ghostsNumber == 4){
+                g1.fill = Enums.Colors.yellow;
+            }
             
             g1.target1 = _prey;
             g1.target2 = null; 
             
-            movingElements.push(g1);    
+            movingElements.push(g1);
+            
+            console.log(g1.DebugName + " has just spawned!"); 
         };
         
         //window.setInterval(handler, timer);
-        handler();
+        //handler();
+        setTimeout(handler, timer);
     };
     
     
@@ -179,8 +363,12 @@ function initGame() {
     movingElements.push(eater);
     var ctx = c.getContext("2d");
     
-    // addGhost(23,1, 2000);
-    // addGhost(5,1, 4000);
+    var ghostsCounter = 1;
+    //addGhost(23, 1, 2000, ghostsCounter++);
+    //addGhost(5,  1, 4000, ghostsCounter++);
+    
+    addGhost(11, 5, 3000, ghostsCounter++);
+    //addGhost(15, 26, 3000, ghostsCounter++);
 }
 
 function clearScreen(ctx) {
@@ -192,11 +380,29 @@ function updateGame() {
 }
 
 function drawGame(ctx) {
+    Debug.writeText(ctx, 10, 10, "teste", "avr");
     Draw.cells(validCells, ctx);
-    //Draw.scoreElements(); //TODO:
+    //Draw.scoreElements(validCells, ctx); //TODO:
     Draw.uiElements(movingElements, ctx);
     
     //Draw.uiElement(_prey, ctx);
+    
+    
+    GameLogic.checkCollisions(movingElements, validCells);
+    
+    Draw.hpBar(ctx);
+    Draw.score(ctx);
+    
+    //60 frames  _ 1 sec
+    //x frames   _ 7 sec
+    var setChaseTime = function(){
+        var aux = GameCfg.chaseTimeSeconds * 60;
+        if((frameCount < 60 && !GameLogic.isChaseTime)  || (frameCount % aux == 0)){
+            GameLogic.setChaseTimeOn(!GameLogic.isChaseTime, movingElements, validCells);
+        }
+    };
+    
+    setChaseTime();
 }
 
 
@@ -236,22 +442,22 @@ var Level = {
 }
 
 var Draw = {
-//     hpBar: function (ctx) {
-//         for (var i = 0; i < 5; i++) {
-//             if (true)
-//                 ctx.fillStyle = Enums.Colors.blue;
-//             else
-//                 ctx.fillStyle = Enums.Colors.red;
-//             ctx.fillRect(100 + i * 25, 16, 15, 15);
-//         }
-// 
-//     },
     cells: function(matrix, ctx){
         Draw.levelInit(matrix, ctx);
     },
     cell: function(element, ctx, secondCall){
         var casted = Cell('','','');
-        casted = element; 
+        casted = element;
+        
+        var hasScore = false;
+        var drawScore = function(hasScore){
+            if(hasScore)
+            {
+                Draw.scoreElement(element.x, element.y, ctx);
+            };
+        };
+        
+        var minus = 0;
 
         if (element.cType == "W") {
             
@@ -260,7 +466,18 @@ var Draw = {
         } else if (element.cType == "w") {
             ctx.fillStyle = Enums.Colors.darkBlue;
         } else if (element.cType == "o") {
-            ctx.fillStyle = Enums.Colors.white;
+            var fill = Enums.Colors.white;
+            
+            if(element.fill && element.fill != fill){
+                fill = element.fill;
+                ctx.globalAlpha = 0.3;
+                minus = 10;
+            }else{
+                ctx.globalAlpha = GameCfg.opacity;
+            }
+            
+            ctx.fillStyle = fill;
+            hasScore = (casted.score > 0);
         }
         else {
             ctx.fillStyle = Enums.Colors.red;
@@ -270,7 +487,7 @@ var Draw = {
 
         var length = GameCfg.uiElementsLength;
             
-            var minus = 0;
+            
             if(secondCall){
                 minus = 5;
             }
@@ -278,6 +495,17 @@ var Draw = {
         var tempx = length * element.x;
         var tempy = length * element.y;
         ctx.fillRect(tempx, tempy, length-minus, length);
+        
+        drawScore(hasScore);
+        
+        
+    },
+    scoreElement: function(x, y, ctx){
+        
+        var scoreElem = scoreElementFromCell(x, y);
+        
+        
+        ctxHelper.fillRect2(scoreElem.x, scoreElem.y, GameCfg.scoreLength, GameCfg.scoreLength, Enums.Colors.red, ctx);
     },
     levelInit: function (matrix, ctx) {
         if (matrix && matrix.length > 0) {
@@ -328,10 +556,8 @@ var Draw = {
                 var tst = "current: x= " + currElem.x + "; y="+ currElem.y + "; moved: x=" + movedElement.x + " y=" + movedElement.y;
             }
             
-            // logEveryFrameX('FromX: ' + currElem.x + " FromY: " + currElem.y, 60);
-            // logEveryFrameX('To__X: ' + movedElement.x + " To__Y: " + movedElement.y, 60);
-             logEveryFrameX('CurrDir: ' + currElem.direction, 60);
-             logEveryFrameX('NextDir: ' + movedElement.nextDirection, 60);
+             //logEveryFrameX('CurrDir: ' + currElem.direction, 60);
+             //logEveryFrameX('NextDir: ' + movedElement.nextDirection, 60);
             
             var checkFuture = true && currElem.direction != movedElement.nextDirection;
             if(isNextPositionValid(currElem, movedElement, checkFuture)){
@@ -350,8 +576,7 @@ var Draw = {
 
                     
             }else{
-                //console.log('position not allowed!');
-                logEveryFrameX('position not allowed!', 60);
+                //logEveryFrameX('position not allowed!', 60);
             }
             
             Draw.uiElement(currElem, ctx);
@@ -359,15 +584,49 @@ var Draw = {
             var next = Object.create( currElem );//UiElement('','','');
             
              next.x += next.vx;
-             next.y += next.vy;            
-             if(isNextPositionValid(currElem, next))
+             next.y += next.vy;
+             var isStuck = next.vx == 0 && next.vy == 0;   
+             if(!isStuck && isNextPositionValid(currElem, next))
              {
                  currElem.x += currElem.vx;
                  currElem.y += currElem.vy;
+             }else{
+                // var xDiff = next.x - currElem.x;
+                // var yDiff = next.y - currElem.y;
+                // var isStuck = next.direction == next.nextDirection;
+                var repeatUntilValidPosition = (currElem.cType == Enums.UiElements.ghost) 
+                    //&& (xDiff == 0) && (yDiff == 0);
+                    //&& isStuck
+                    ;
+                    
+                if(repeatUntilValidPosition){
+                    counter = 0;
+                    var search = true;
+                    var movedElementLocal = next;
+                    var desiredDirection = next.nextDirection;
+                    
+                    while(search && counter < 100){
+                        counter++;
+                        
+                        currElem.nextDirection = desiredDirection;
+                        currElem.direction = movedElementLocal.direction;
+                        movedElementLocal = AI.MoveGhost(currElem);
+                        
+                        //invert
+                        movedElementLocal.direction = movedElementLocal.nextDirection;
+                        movedElementLocal.nextDirection = desiredDirection;
+                        
+                        search = !isNextPositionValid(currElem, movedElementLocal, checkFuture);
+                        if(!search){
+                            movedElement = movedElementLocal;  
+                            
+                        }
+                    }
+                }
              }
             
             
-
+            
             //uiElementsList[i] = movedElement;
 
             continue;
@@ -393,6 +652,26 @@ var Draw = {
         
         
         //Debug.writeText(ctx, 10, 10, "teste", "avr");
+    }
+    ,hpBar: function (ctx) {
+        // for (var i = 0; i < GameCfg.lives; i++) {
+        //     if (true)
+        //         ctx.fillStyle = Enums.Colors.blue;
+        //     else
+        //         ctx.fillStyle = Enums.Colors.red;
+        //     ctx.fillRect(100 + i * 25, 16, 15, 15);
+        // }
+        
+        var message = _prey.lives + " LIVES";
+        var elemId = "lblLives";
+        var elem = document.getElementById(elemId);
+        elem.innerText = message;
+    },
+    score: function(ctx){
+        var message = "TOTAL: " + totalScore*-1;
+        var elemId = "lblScore";
+        var elem = document.getElementById(elemId);
+        elem.innerText = message;
     }
 }
 
@@ -606,139 +885,6 @@ function isNextPositionValid(currentPosition, nextPosition, checkFuture) {
     
 }
 
-function isNextPositionValid2(currentPosition, nextPosition, checkFuture) {
-    var castedCurrentPos = UiElement('','','');
-    var castedNextPos = UiElement('','','');
-    
-    castedCurrentPos = currentPosition;
-    castedNextPos = nextPosition;
-    
-    var xDiff = castedNextPos.x - castedCurrentPos.x;
-    var yDiff = castedNextPos.y - castedCurrentPos.y;
-    
-    //var validCells = [];
-    //validCells = getValidCellsToMoveTo(castedCurrentPos, castedNextPos);
-    
-    var floorOrCeilLogic = (function(diff) {
-            if(diff >= 0){
-                return function(arg){
-                    return Math.floor(arg);
-                };
-            }else{
-                return function(arg){
-                    return Math.ceil(arg);
-                };
-            }
-        });
-    
-    var msg01 = "xDiff: " + xDiff + "; yDiff: " + yDiff;
-    Debug.debugMessage(1, msg01);
-    var msg02 = "(castedNextPos.DIR: "+ castedNextPos.direction + ";  castedNextPos.NDIR: " + castedNextPos.nextDirection + "); --||-- (castedCurrentPos.DIR: " + castedCurrentPos.direction + "; castedCurrentPos.NDIR: " + castedCurrentPos.nextDirection + ")";
-    Debug.debugMessage(2, msg02);
-    
-    var msg03 = "castedCurrentPos.x: " + castedCurrentPos.x + "; castedNextPos.x: " + castedNextPos.x
-    + "castedCurrentPos.y: " + castedCurrentPos.y + "; castedNextPos.y: " + castedNextPos.y;
-    Debug.debugMessage(3, msg03);
-    
-    var xDiffManual = 0;
-    var yDiffManual = 0;
-    
-    if(castedNextPos.nextDirection == Enums.Directions.RIGHT || castedCurrentPos.direction == Enums.Directions.RIGHT){
-        xDiffManual = 1;
-    }else if (castedNextPos.nextDirection == Enums.Directions.LEFT || castedCurrentPos.direction == Enums.Directions.LEFT){
-        xDiffManual = -1;
-    }
-    
-    if(castedNextPos.nextDirection == Enums.Directions.UP || castedCurrentPos.direction == Enums.Directions.UP){
-        yDiffManual = -1;
-    }else if (castedNextPos.nextDirection == Enums.Directions.DOWN || castedCurrentPos.direction == Enums.Directions.DOWN){
-        yDiffManual = 1;
-    }
-    
-    var msg04 = "xDiffManual: " + xDiffManual + "; yDiffManual: " + yDiffManual;
-    Debug.debugMessage(4, msg04);
-    
-    
-    var moveLogicX = floorOrCeilLogic(xDiffManual);
-    var moveLogicY = floorOrCeilLogic(yDiffManual);
-    
-    
-    var cellToFind = Cell('','','');
-    if(Math.abs(xDiff) >= 1) {
-        //cellToFind.y = Math.floor(castedNextPos.y/GameCfg.uiElementsLength);
-        cellToFind.y = moveLogicY((castedNextPos.y - yDiff)/GameCfg.uiElementsLength) + yDiff;
-        cellToFind.x = moveLogicX((castedNextPos.x - xDiff)/GameCfg.uiElementsLength) + xDiff;
-    }
-    
-    if(Math.abs(yDiff) >= 1){
-        //cellToFind.x = Math.ceil(castedNextPos.x/GameCfg.uiElementsLength);
-        cellToFind.x = moveLogicX((castedNextPos.x - xDiff)/GameCfg.uiElementsLength) + xDiff;
-        cellToFind.y = moveLogicY((castedNextPos.y - yDiff)/GameCfg.uiElementsLength) + yDiff;
-    }
-    
-    
-    for (var index = 0; index < validCells.length; index++) {
-        var cell = Cell('','',''); 
-        cell = validCells[index];
-        
-        // if(isValidCellToMoveTo(castedCurrentPos, castedNextPos, cell)){
-        //     return true;  
-        // }
-        if(cell.x == cellToFind.x && cell.y == cellToFind.y){
-            
-            if(checkFuture){
-                counter++;
-                var mmsg = "DiffX: " + xDiff + "; cell.x: " + cell.x + "; cell.y: " + cell.y;
-                logEveryFrameX(mmsg, 60);
-                if(counter == 100){
-                    //alert(mmsg + "; Counter: " + counter);
-                }
-            }
-            return true;
-        }
-    }
-    
-    return false;
-}
-
-// function isValidCellToMoveTo(currentPosition, nextPosition, cell){
-//     var castedCurrentPos = UiElement('','','');
-//     var castedNextPos = UiElement('','','');
-//     
-//     var validX = (castedCurrentPos.x >= cell.x)  
-//         && (castedNextPos.x + GameCfg.uiElementsLength >= cell.x + GameCfg.uiElementsLength) 
-//         && (cell.y == castedCurrentPos.y)
-//         && (cell.cType != Enums.UiElements.wall);
-// 
-//         return validX;
-//     
-// }
-
-// function getValidCellsToMoveTo(currentPosition, nextPosition){
-//     var castedCurrentPos = UiElement('','','');
-//     var castedNextPos = UiElement('','','');
-//     
-//     castedCurrentPos = currentPosition;
-//     castedNextPos = nextPosition;
-//     
-//     var validCells = [];
-//     for (var index = 0; index < levelMatrix.length; index++) {
-//         var cell = Cell('','','');
-//         cell = levelMatrix[index];
-//         
-//         
-//         if(isValidCellToMoveTo(castedCurrentPos, castedNextPos, cell)){
-//             validCells.push(cell);
-//         }
-//         
-//         //else if()
-//         
-//     }
-//     
-//     return validCells;
-// }
-
-
 function Shape(x, y, w, h, fill, vx, vy, name) {
     this.x = x;
     this.y = y;
@@ -753,18 +899,18 @@ function Shape(x, y, w, h, fill, vx, vy, name) {
 }
 
 function Cell(x, y, cType) {
-    return { "x": x, "y": y, "cType": cType };
+    return { "x": x, "y": y, "cType": cType , "score" : GameCfg.normalCellScore };
 }
 
-function UiElement(x, y, eType) {
+function UiElement(cellX, cellY, eType) {
     var vx = 0; //GameCfg.ghostVx;
     var vy = 0; //GameCfg.ghostVx;
 
     return { 
-        "cellX": x, 
-        "cellY": y, 
-        "x": x*GameCfg.uiElementsLength, 
-        "y": y*GameCfg.uiElementsLength, 
+        "cellX": cellX, 
+        "cellY": cellY, 
+        "x": cellX*GameCfg.uiElementsLength, 
+        "y": cellY*GameCfg.uiElementsLength, 
         "cType": eType, 
         "length": GameCfg.uiElementsLength, 
         "vx": vx, 
@@ -772,28 +918,56 @@ function UiElement(x, y, eType) {
         "direction": null, 
         "nextDirection": null, 
         //"nextDirectionToBe": null,
-        "fill": Enums.Colors.blue
-         
+        "fill": Enums.Colors.blue,
+        "hit" : function(hitter){ 
+            
+                },
+        "IsCollided" : false,
+        "DebugName" : ""
         };
 }
 
 
 function Eater(x, y) {
     var elem = UiElement(x, y, Enums.UiElements.eater);
+    elem.DebugName = "Eater";
     elem.fill = Enums.Colors.black;
     //elem.vx = GameCfg.eaterVx;
     //elem.vy = GameCfg.eaterVx
+    
+    elem.hit = function(hitter){
+        var casted = UiElement('','',''); casted = hitter;
+        var temp = elem.lives-1;
+        var msg = 'Loose 1 life ('+temp+' of '+GameCfg.lives+')';
+        if(this.lives > 0){
+            if(casted.cType == Enums.UiElements.ghost){
+                this.lives-= 1;
+                
+                if(this.lives > 0){
+                    initGame(this.lives);
+                }else{
+                    GameLogic.gameOver();
+                }
+                //alert(msg);
+            }
+        }else{
+            GameLogic.gameOver();
+        }
+        console.log(msg);
+    }
 
     return elem;
 }
 
-function Ghost(x, y, eType) {
+function Ghost(x, y, eType, name) {
     var elem = UiElement(x, y, eType);
     elem.fill = Enums.Colors.red;
     elem.cType = Enums.UiElements.ghost;
 
     elem.target1 = null;
     elem.target2 = null;
+    
+    elem.DebugName = name;
     
     return elem;
 }
@@ -809,6 +983,13 @@ var ctxHelper = {
         var oldStyle = ctx.fillStyle;
         ctx.fillStyle = uiElem.fill;
         ctx.fillRect(uiElem.x, uiElem.y, uiElem.length, uiElem.length); 
+        ctx.fillStyle = oldStyle;
+    },
+    
+    fillRect2: function(x, y, lengthX, lengthY, fillColor, ctx){
+        var oldStyle = ctx.fillStyle;
+        ctx.fillStyle = fillColor;
+        ctx.fillRect(x, y, lengthX, lengthY); 
         ctx.fillStyle = oldStyle;
     }   
 }
@@ -875,27 +1056,43 @@ var AI = {
         var xDiff = elemMiddleX - targetMiddleX;
         var yDiff = elemMiddleY - targetMiddleY;
         
-        if(Math.abs(xDiff) > 0 && elem.vx == 0){
-            if(xDiff < 0){
-                casted.nextDirection = Enums.Directions.RIGHT;
-                casted.vx = GameCfg.ghostVx;
-                casted.vy = 0;
-            }else{
-                casted.nextDirection = Enums.Directions.LEFT;
-                casted.vx = GameCfg.ghostVx*-1;
-                casted.vy = 0;
+        var xLogic = function(){
+            if(Math.abs(xDiff) > 0 && elem.vx == 0){
+                if(xDiff < 0 || casted.direction == Enums.Directions.LEFT){
+                    casted.nextDirection = Enums.Directions.RIGHT;
+                    casted.vx = GameCfg.ghostVx;
+                    casted.vy = 0;
+                }else{
+                    casted.nextDirection = Enums.Directions.LEFT;
+                    casted.vx = GameCfg.ghostVx*-1;
+                    casted.vy = 0;
+                }
             }
-        }else if(Math.abs(yDiff) > 0 && elem.vy == 0){
-            if(yDiff < 0){
-                casted.nextDirection = Enums.Directions.DOWN;
-                casted.vy = GameCfg.ghostVx;
-                casted.vx = 0;
-            }else{
-                casted.nextDirection = Enums.Directions.UP;
-                casted.vy = GameCfg.ghostVx*-1;
-                casted.vx = 0;
+        };
+        
+        var yLogic = function(){
+            if(Math.abs(yDiff) > 0 && elem.vy == 0){
+                if(yDiff < 0 && casted.direction != Enums.Directions.DOWN){
+                    casted.nextDirection = Enums.Directions.DOWN;
+                    casted.vy = GameCfg.ghostVx;
+                    casted.vx = 0;
+                }else{
+                    casted.nextDirection = Enums.Directions.UP;
+                    casted.vy = GameCfg.ghostVx*-1;
+                    casted.vx = 0;
+                }
             }
         }
+        
+        //if failed previous PosCalc, with right or left, then try to move Y 
+        var condition1 = casted.nextDirection == Enums.Directions.RIGHT 
+            || casted.nextDirection == Enums.Directions.LEFT;
+        var condition2 = (elem.vx == 0 && elem.vy == 0) && (casted.direction == Enums.Directions.RIGHT || casted.direction == Enums.Directions.LEFT); 
+        if(condition1 || condition2){
+                yLogic();
+            }else{
+                xLogic();
+            }
         
         //if it's the first time
         if(!casted.direction){
@@ -913,3 +1110,7 @@ var AI = {
         return calcNextPosition(currElem, true);
     }
 }
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+};
