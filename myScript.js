@@ -44,6 +44,7 @@ var GameCfg = {
 var Context = {
     eaterPlan: [],
     currentBoardScore: 0,
+    debug: true
 }
 
 var GameLogic = {
@@ -63,7 +64,9 @@ var GameLogic = {
            if(ghost.cType == Enums.UiElements.ghost){
                if(value){ //set chase time on
                    if(ghost.target1.cType != Enums.UiElements.eater){
-                        ghost.target1.fill = Enums.Colors.white;
+                        if(Context.debug){
+                            ghost.target1.fill = Enums.Colors.white;
+                        }
                    }
                    ghost.target1 = _prey;
                    //old.fill = Enums.Colors.white;
@@ -71,8 +74,12 @@ var GameLogic = {
                    var generateRandomTarget = function(){
                        
                        var newTargetIndex = getRandomInt(0, validCells.length-1);
-                       var newTarget = validCells[newTargetIndex];
-                       newTarget.fill = ghost.fill;
+                       var newTargetCell = validCells[newTargetIndex];
+                       if(Context.debug){
+                        newTargetCell.fill = ghost.fill;
+                       }
+                       
+                       var newTarget = UiElement(newTargetCell.x, newTargetCell.y, Enums.UiElements.dot);
                        ghost.target1 = newTarget;
                    };
                    
@@ -399,8 +406,8 @@ function initGame(livesLeft) {
     //addGhost(23, 1, 2000, ghostsCounter++);
     //addGhost(5,  1, 4000, ghostsCounter++);
     
-    addGhost(11, 5, 3000, ghostsCounter++);
-    //addGhost(15, 26, 3000, ghostsCounter++);
+    //addGhost(11, 5, 3000, ghostsCounter++);
+    addGhost(15, 26, 3000, ghostsCounter++);
 }
 
 function clearScreen(ctx) {
@@ -1172,9 +1179,8 @@ var AI = {
     MoveEater: function(elem){
         var currElem = UiElement('','',''); currElem = elem;
         return calcNextPosition(currElem, true);
-    }
-    
-    ,MoveEaterAuto: function(elem){
+    }, 
+    MoveEaterAuto: function(elem){
         var cellsIndexWithScore = [];
         
         if(!elem.target1 || (elem.x == elem.target1.x && elem.y == elem.target1.y)){
@@ -1188,13 +1194,17 @@ var AI = {
             var indexChosen = getRandomInt(0, cellsIndexWithScore.length-1);
         
             var newTargetIndex = cellsIndexWithScore[indexChosen];
-            elem.target1 = validCells[newTargetIndex];
-            elem.target1.fill = elem.fill;
+            var cellChosen = validCells[newTargetIndex];
+            if(Context.debug){
+                cellChosen.fill = elem.fill;
+            }
+            elem.target1 = UiElement(cellChosen.x, cellChosen.y, Enums.UiElements.dot);
+            //elem.target1.fill = Enums.Colors.black;;
         }
         
         
         
-        return AI.MoveEaterAutoLogic(elem);
+        return AI.MoveGhost(elem);
         
         // var generateRandomTarget = function(){               
         //     var newTargetIndex = getRandomInt(0, validCells.length-1);
@@ -1203,7 +1213,7 @@ var AI = {
         //     ghost.target1 = newTarget;
         // };
     },
-    MoveEaterAutoLogic: function(elem){
+    MoveElementAuto: function(elem){
         var casted = UiElement('','',''); casted = casted = Object.create( elem );
         var target = UiElement('','',''); target = casted.target1;
         
@@ -1222,43 +1232,27 @@ var AI = {
         var xDiff = elemMiddleX - targetMiddleX;
         var yDiff = elemMiddleY - targetMiddleY;
         
-        var xLogic = function(){
-            if(Math.abs(xDiff) > 0 && elem.vx == 0){
-                if(xDiff < 0 || casted.direction == Enums.Directions.LEFT){
-                    casted.nextDirection = Enums.Directions.RIGHT;
-                    casted.vx = GameCfg.ghostVx;
-                    casted.vy = 0;
-                }else{
-                    casted.nextDirection = Enums.Directions.LEFT;
-                    casted.vx = GameCfg.ghostVx*-1;
-                    casted.vy = 0;
-                }
+        if(Math.abs(xDiff) > 0 && elem.vx == 0){
+            if(xDiff > 0){
+                casted.nextDirection = Enums.Directions.RIGHT;
+                casted.vx = GameCfg.ghostVx;
+                casted.vy = 0;
+            }else{
+                casted.nextDirection = Enums.Directions.LEFT;
+                casted.vx = GameCfg.ghostVx*-1;
+                casted.vy = 0;
             }
-        };
-        
-        var yLogic = function(){
-            if(Math.abs(yDiff) > 0 && elem.vy == 0){
-                if(yDiff < 0 && casted.direction != Enums.Directions.DOWN){
-                    casted.nextDirection = Enums.Directions.DOWN;
-                    casted.vy = GameCfg.ghostVx;
-                    casted.vx = 0;
-                }else{
-                    casted.nextDirection = Enums.Directions.UP;
-                    casted.vy = GameCfg.ghostVx*-1;
-                    casted.vx = 0;
-                }
+        }else if(Math.abs(yDiff) > 0 && elem.vy == 0){
+            if(yDiff < 0){
+                casted.nextDirection = Enums.Directions.DOWN;
+                casted.vy = GameCfg.ghostVx;
+                casted.vx = 0;
+            }else{
+                casted.nextDirection = Enums.Directions.UP;
+                casted.vy = GameCfg.ghostVx*-1;
+                casted.vx = 0;
             }
         }
-        
-        //if failed previous PosCalc, with right or left, then try to move Y 
-        var condition1 = casted.nextDirection == Enums.Directions.RIGHT 
-            || casted.nextDirection == Enums.Directions.LEFT;
-        var condition2 = (elem.vx == 0 && elem.vy == 0) && (casted.direction == Enums.Directions.RIGHT || casted.direction == Enums.Directions.LEFT); 
-        if(condition1 || condition2){
-                yLogic();
-            }else{
-                xLogic();
-            }
         
         //if it's the first time
         if(!casted.direction){
