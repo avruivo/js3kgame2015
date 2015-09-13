@@ -38,7 +38,7 @@ var GameCfg = {
     lives: 3,
     normalCellScore: 1,
     xlCellScore: 2,
-    chaseTimeSeconds: 7
+    chaseTimeSeconds: 8
 }
 
 var GameLogic = {
@@ -57,9 +57,11 @@ var GameLogic = {
            var ghost =  UiElement('','',''); ghost = movingElements[elemIndex];
            if(ghost.cType == Enums.UiElements.ghost){
                if(value){ //set chase time on
-                   var old = ghost.target1;
+                   if(ghost.target1.cType != Enums.UiElements.eater){
+                        ghost.target1.fill = Enums.Colors.white;
+                   }
                    ghost.target1 = _prey;
-                   old.fill = Enums.Colors.white;
+                   //old.fill = Enums.Colors.white;
                }else{
                    var generateRandomTarget = function(){
                        
@@ -325,6 +327,7 @@ Draw.levelInit(levelMatrix, ctx);
 };
 
 function initGame(livesLeft) {
+    //frameCount = 0;
     if(!livesLeft){
         levelMatrix = Level.level01();
     }
