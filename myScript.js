@@ -414,6 +414,10 @@ function updateGame() {
 function drawGame(ctx) {
     
     Context.currentBoardScore = Draw.cells(validCells, ctx);
+    
+    if(Context.currentBoardScore <= 0){
+        GameLogic.gameOver();
+    }
     //Draw.scoreElements(validCells, ctx); //TODO:
     Draw.uiElements(movingElements, ctx);
     
