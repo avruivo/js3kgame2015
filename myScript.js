@@ -418,7 +418,7 @@ function drawGame(ctx) {
     
     setChaseTime();
     Debug.writeText(ctx, 20, 17, "Lives: ", _prey.lives);
-    Debug.writeText(ctx, 435, 17, "#Score: ", totalScore*-1);
+    Debug.writeText(ctx, 435, 17, "#Score: ", totalScore*-1); 
 }
 
 
