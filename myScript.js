@@ -576,11 +576,45 @@ var Draw = {
             var next = Object.create( currElem );//UiElement('','','');
             
              next.x += next.vx;
-             next.y += next.vy;            
-             if(isNextPositionValid(currElem, next))
+             next.y += next.vy;
+             var isStuck = next.vx == 0 && next.vy == 0;   
+             if(!isStuck && isNextPositionValid(currElem, next))
              {
                  currElem.x += currElem.vx;
                  currElem.y += currElem.vy;
+             }else{
+                // var xDiff = next.x - currElem.x;
+                // var yDiff = next.y - currElem.y;
+                // var isStuck = next.direction == next.nextDirection;
+                var repeatUntilValidPosition = (currElem.cType == Enums.UiElements.ghost) 
+                    //&& (xDiff == 0) && (yDiff == 0);
+                    //&& isStuck
+                    ;
+                    
+                if(repeatUntilValidPosition){
+                    counter = 0;
+                    var search = true;
+                    var movedElementLocal = next;
+                    var desiredDirection = next.nextDirection;
+                    
+                    while(search && counter < 100){
+                        counter++;
+                        
+                        currElem.nextDirection = desiredDirection;
+                        currElem.direction = movedElementLocal.direction;
+                        movedElementLocal = AI.MoveGhost(currElem);
+                        
+                        //invert
+                        movedElementLocal.direction = movedElementLocal.nextDirection;
+                        movedElementLocal.nextDirection = desiredDirection;
+                        
+                        search = !isNextPositionValid(currElem, movedElementLocal, checkFuture);
+                        if(!search){
+                            movedElement = movedElementLocal;  
+                            
+                        }
+                    }
+                }
              }
             
             
@@ -1010,27 +1044,43 @@ var AI = {
         var xDiff = elemMiddleX - targetMiddleX;
         var yDiff = elemMiddleY - targetMiddleY;
         
-        if(Math.abs(xDiff) > 0 && elem.vx == 0){
-            if(xDiff < 0){
-                casted.nextDirection = Enums.Directions.RIGHT;
-                casted.vx = GameCfg.ghostVx;
-                casted.vy = 0;
-            }else{
-                casted.nextDirection = Enums.Directions.LEFT;
-                casted.vx = GameCfg.ghostVx*-1;
-                casted.vy = 0;
+        var xLogic = function(){
+            if(Math.abs(xDiff) > 0 && elem.vx == 0){
+                if(xDiff < 0 || casted.direction == Enums.Directions.LEFT){
+                    casted.nextDirection = Enums.Directions.RIGHT;
+                    casted.vx = GameCfg.ghostVx;
+                    casted.vy = 0;
+                }else{
+                    casted.nextDirection = Enums.Directions.LEFT;
+                    casted.vx = GameCfg.ghostVx*-1;
+                    casted.vy = 0;
+                }
             }
-        }else if(Math.abs(yDiff) > 0 && elem.vy == 0){
-            if(yDiff < 0){
-                casted.nextDirection = Enums.Directions.DOWN;
-                casted.vy = GameCfg.ghostVx;
-                casted.vx = 0;
-            }else{
-                casted.nextDirection = Enums.Directions.UP;
-                casted.vy = GameCfg.ghostVx*-1;
-                casted.vx = 0;
+        };
+        
+        var yLogic = function(){
+            if(Math.abs(yDiff) > 0 && elem.vy == 0){
+                if(yDiff < 0 && casted.direction != Enums.Directions.DOWN){
+                    casted.nextDirection = Enums.Directions.DOWN;
+                    casted.vy = GameCfg.ghostVx;
+                    casted.vx = 0;
+                }else{
+                    casted.nextDirection = Enums.Directions.UP;
+                    casted.vy = GameCfg.ghostVx*-1;
+                    casted.vx = 0;
+                }
             }
         }
+        
+        //if failed previous PosCalc, with right or left, then try to move Y 
+        var condition1 = casted.nextDirection == Enums.Directions.RIGHT 
+            || casted.nextDirection == Enums.Directions.LEFT;
+        var condition2 = (elem.vx == 0 && elem.vy == 0) && (casted.direction == Enums.Directions.RIGHT || casted.direction == Enums.Directions.LEFT); 
+        if(condition1 || condition2){
+                yLogic();
+            }else{
+                xLogic();
+            }
         
         //if it's the first time
         if(!casted.direction){
