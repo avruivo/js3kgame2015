@@ -517,6 +517,42 @@ var Draw = {
              {
                  currElem.x += currElem.vx;
                  currElem.y += currElem.vy;
+             }else{
+                // var xDiff = next.x - currElem.x;
+                // var yDiff = next.y - currElem.y;
+                // var isStuck = next.direction == next.nextDirection;
+                var repeatUntilValidPosition = (currElem.cType == Enums.UiElements.ghost) 
+                    //&& (xDiff == 0) && (yDiff == 0);
+                    //&& isStuck
+                    ;
+                    
+                if(repeatUntilValidPosition){
+                    counter = 0;
+                    var search = true;
+                    var movedElementLocal = next;
+                    var desiredDirection = next.nextDirection;
+                    
+                    while(search && counter < 100){
+                        counter++;
+                        
+                        currElem.nextDirection = desiredDirection;
+                        currElem.direction = movedElementLocal.direction;
+                        movedElementLocal = AI.MoveGhost(currElem, true);
+                        
+                        //invert
+                        movedElementLocal.direction = movedElementLocal.nextDirection;
+                        movedElementLocal.nextDirection = desiredDirection;
+                        
+                        search = !isNextPositionValid(currElem, movedElementLocal, checkFuture);
+                        if(!search){
+                            movedElement = movedElementLocal;  
+                            currElem.x += movedElementLocal.vx;
+                            currElem.y += movedElementLocal.vy;
+                            currElem.direction = movedElementLocal.direction;
+                            currElem.nextDirection = movedElementLocal.nextDirection;
+                        }
+                    }
+                }
              }
             
             
@@ -927,10 +963,9 @@ var AI = {
         }
     },
     
-    MoveGhost: function(elem){
+    MoveGhost: function(elem, isRetry){        
         var casted = UiElement('','',''); casted = casted = Object.create( elem );
         var target = UiElement('','',''); target = casted.target1;
-        
         
         var calcMiddle = function(value) {
             return value + (GameCfg.uiElementsLength / 2);
@@ -946,25 +981,74 @@ var AI = {
         var xDiff = elemMiddleX - targetMiddleX;
         var yDiff = elemMiddleY - targetMiddleY;
         
-        if(Math.abs(xDiff) > 0 && elem.vx == 0){
-            if(xDiff < 0){
-                casted.nextDirection = Enums.Directions.RIGHT;
-                casted.vx = GameCfg.ghostVx;
-                casted.vy = 0;
-            }else{
-                casted.nextDirection = Enums.Directions.LEFT;
+        var right = function(){
+            casted.nextDirection = Enums.Directions.RIGHT;
+            casted.vx = GameCfg.ghostVx;
+            casted.vy = 0;
+        };
+        
+        var left = function(){
+            casted.nextDirection = Enums.Directions.LEFT;
                 casted.vx = GameCfg.ghostVx*-1;
                 casted.vy = 0;
-            }
-        }else if(Math.abs(yDiff) > 0 && elem.vy == 0){
-            if(yDiff < 0){
-                casted.nextDirection = Enums.Directions.DOWN;
-                casted.vy = GameCfg.ghostVx;
-                casted.vx = 0;
-            }else{
-                casted.nextDirection = Enums.Directions.UP;
+        };
+        
+        var up = function(){
+            casted.nextDirection = Enums.Directions.UP;
                 casted.vy = GameCfg.ghostVx*-1;
                 casted.vx = 0;
+        };
+        
+        var down = function(){
+            casted.nextDirection = Enums.Directions.DOWN;
+                        casted.vy = GameCfg.ghostVx;
+                        casted.vx = 0;
+        };
+        
+        if(isRetry && casted.nextDirection){
+            if(casted.nextDirection == Enums.Directions.RIGHT || casted.nextDirection == Enums.Directions.LEFT){
+                if(casted.direction == Enums.Directions.RIGHT || casted.direction == Enums.Directions.LEFT){
+                    if(yDiff > 0){
+                        up();
+                    }else{
+                        down();
+                    }
+                }else{
+                    if(casted.direction == Enums.Directions.DOWN){
+                        up();
+                    }else{
+                        down();
+                    }
+                }
+            }else{
+                if(casted.direction == Enums.Directions.UP || casted.direction == Enums.Directions.DOWN){
+                    if(xDiff > 0){
+                        right();
+                    }else{
+                        left();
+                    }
+                }else{
+                    if(yDiff > 0){
+                        up();
+                    }else{
+                        down();
+                    }
+                }
+            }
+        }else{
+        
+            if(Math.abs(xDiff) > 0 && elem.vx == 0){
+                if(xDiff < 0){
+                    right();
+                }else{
+                    left();
+                }
+            }else if(Math.abs(yDiff) > 0 && elem.vy == 0){
+                if(yDiff < 0){
+                    down();
+                }else{
+                    up();
+                }
             }
         }
         
