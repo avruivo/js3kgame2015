@@ -41,6 +41,11 @@ var GameCfg = {
     chaseTimeSeconds: 8
 }
 
+var Context = {
+    eaterPlan: [],
+    currentBoardScore: 0,
+}
+
 var GameLogic = {
     isChaseTime: false,
     setChaseTimeOn: function(value, movingElements, validCells){
@@ -148,10 +153,20 @@ var GameLogic = {
             //currentUiElement
     },
     
-    gameOver(){
+    gameOver: function(){
         clearMainInterval();
         alert("Game is over!");
-    }
+    },
+    // generateEaterPlan: function(){
+    //     //1 - NW
+    //     //2 - SW
+    //     //3 - NE
+    //     //4 - SE
+    //     for (var index = 0; index < 4; index++) {
+    //         
+    //         getRandomInt()
+    //     }
+    // }
 }
 
 // function scoreElementFromUiElement(x, y){
@@ -398,7 +413,7 @@ function updateGame() {
 
 function drawGame(ctx) {
     
-    Draw.cells(validCells, ctx);
+    Context.currentBoardScore = Draw.cells(validCells, ctx);
     //Draw.scoreElements(validCells, ctx); //TODO:
     Draw.uiElements(movingElements, ctx);
     
@@ -421,7 +436,7 @@ function drawGame(ctx) {
     
     setChaseTime();
     Debug.writeText(ctx, 20, 17, "Lives: ", _prey.lives);
-    Debug.writeText(ctx, 435, 17, "#Score: ", totalScore*-1); 
+    Debug.writeText(ctx, 435, 17, "#Score: ", Context.currentBoardScore); 
 }
 
 
@@ -467,7 +482,8 @@ var Level = {
 
 var Draw = {
     cells: function(matrix, ctx){
-        Draw.levelInit(matrix, ctx);
+        var totalBoardScore = Draw.levelInit(matrix, ctx);
+        return totalBoardScore;
     },
     cell: function(element, ctx, secondCall){
         var casted = Cell('','','');
@@ -479,7 +495,9 @@ var Draw = {
             {
                 var isXl = casted.cType == Enums.UiElements.powerup;
                 Draw.scoreElement(element.x, element.y, isXl, ctx);
+                return GameCfg.normalCellScore;
             };
+            return 0;
         };
         
         var minus = 0;
@@ -525,7 +543,7 @@ var Draw = {
         var tempy = length * element.y;
         ctx.fillRect(tempx, tempy, length-minus, length);
         
-        drawScore(hasScore);
+        return drawScore(hasScore);
         
         
     },
@@ -545,6 +563,7 @@ var Draw = {
         ctxHelper.fillRect2(scoreElem.x, scoreElem.y, length, length, fill, ctx);
     },
     levelInit: function (matrix, ctx) {
+        var boardScore = 0;
         if (matrix && matrix.length > 0) {
             for (var index = 0; index < matrix.length; index++) {
                 var element = matrix[index];
@@ -565,9 +584,10 @@ var Draw = {
 //                 var tempy = length * element.y;
 //                 ctx.fillRect(tempx, tempy, length, length);
 
-                Draw.cell(element, ctx);
+                boardScore += Draw.cell(element, ctx);
             }
         }
+        return boardScore;
     },
     
     uiElement: function(uiElem, ctx) {
@@ -1147,6 +1167,25 @@ var AI = {
     MoveEater: function(elem){
         var currElem = UiElement('','',''); currElem = elem;
         return calcNextPosition(currElem, true);
+    }
+    
+    ,MoveEaterAuto: function(elem){
+        var cellsIndexWithScore = [];
+        for (var index = 0; index < array.length; index++) {
+            var cell = Cell('','',''); cell = array[index];
+            if(cell.score > 0){
+                cellsIndexWithScore.push(index);
+            }
+        }
+        
+        var targetIndex = getRandomInt(0, cellsIndexWithScore)
+        
+        var generateRandomTarget = function(){               
+            var newTargetIndex = getRandomInt(0, validCells.length-1);
+            var newTarget = validCells[newTargetIndex];
+            newTarget.fill = ghost.fill;
+            ghost.target1 = newTarget;
+        };
     }
 }
 
