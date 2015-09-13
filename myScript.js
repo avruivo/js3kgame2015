@@ -1005,6 +1005,7 @@ function Eater(x, y) {
                 this.lives-= 1;
                 
                 if(this.lives > 0){
+                    alert("Well done, the big guy only has " + this.lives + " lives left!" )
                     initGame(this.lives);
                 }else{
                     GameLogic.gameOver();
@@ -1096,7 +1097,7 @@ var AI = {
         if(casted.cType == Enums.UiElements.ghost){
             return AI.MoveGhost(elem);
         }else{
-            return AI.MoveEater(elem);
+            return AI.MoveEaterAuto(elem);
         }
     },
     
@@ -1175,21 +1176,99 @@ var AI = {
     
     ,MoveEaterAuto: function(elem){
         var cellsIndexWithScore = [];
-        for (var index = 0; index < array.length; index++) {
-            var cell = Cell('','',''); cell = array[index];
-            if(cell.score > 0){
-                cellsIndexWithScore.push(index);
+        
+        if(!elem.target1 || (elem.x == elem.target1.x && elem.y == elem.target1.y)){
+            for (var index = 0; index < validCells.length; index++) {
+                var cell = Cell('','',''); cell = validCells[index];
+                if(cell.score > 0){
+                    cellsIndexWithScore.push(index);
+                }
+            }
+            
+            var indexChosen = getRandomInt(0, cellsIndexWithScore.length-1);
+        
+            var newTargetIndex = cellsIndexWithScore[indexChosen];
+            elem.target1 = validCells[newTargetIndex];
+            elem.target1.fill = elem.fill;
+        }
+        
+        
+        
+        return AI.MoveEaterAutoLogic(elem);
+        
+        // var generateRandomTarget = function(){               
+        //     var newTargetIndex = getRandomInt(0, validCells.length-1);
+        //     var newTarget = validCells[newTargetIndex];
+        //     newTarget.fill = ghost.fill;
+        //     ghost.target1 = newTarget;
+        // };
+    },
+    MoveEaterAutoLogic: function(elem){
+        var casted = UiElement('','',''); casted = casted = Object.create( elem );
+        var target = UiElement('','',''); target = casted.target1;
+        
+        
+        var calcMiddle = function(value) {
+            return value + (GameCfg.uiElementsLength / 2);
+        };
+            
+        
+        var targetMiddleX = calcMiddle(target.x); 
+        var targetMiddleY = calcMiddle(target.y);
+        
+        var elemMiddleX = calcMiddle(casted.x);
+        var elemMiddleY = calcMiddle(casted.y);
+
+        var xDiff = elemMiddleX - targetMiddleX;
+        var yDiff = elemMiddleY - targetMiddleY;
+        
+        var xLogic = function(){
+            if(Math.abs(xDiff) > 0 && elem.vx == 0){
+                if(xDiff < 0 || casted.direction == Enums.Directions.LEFT){
+                    casted.nextDirection = Enums.Directions.RIGHT;
+                    casted.vx = GameCfg.ghostVx;
+                    casted.vy = 0;
+                }else{
+                    casted.nextDirection = Enums.Directions.LEFT;
+                    casted.vx = GameCfg.ghostVx*-1;
+                    casted.vy = 0;
+                }
+            }
+        };
+        
+        var yLogic = function(){
+            if(Math.abs(yDiff) > 0 && elem.vy == 0){
+                if(yDiff < 0 && casted.direction != Enums.Directions.DOWN){
+                    casted.nextDirection = Enums.Directions.DOWN;
+                    casted.vy = GameCfg.ghostVx;
+                    casted.vx = 0;
+                }else{
+                    casted.nextDirection = Enums.Directions.UP;
+                    casted.vy = GameCfg.ghostVx*-1;
+                    casted.vx = 0;
+                }
             }
         }
         
-        var targetIndex = getRandomInt(0, cellsIndexWithScore)
+        //if failed previous PosCalc, with right or left, then try to move Y 
+        var condition1 = casted.nextDirection == Enums.Directions.RIGHT 
+            || casted.nextDirection == Enums.Directions.LEFT;
+        var condition2 = (elem.vx == 0 && elem.vy == 0) && (casted.direction == Enums.Directions.RIGHT || casted.direction == Enums.Directions.LEFT); 
+        if(condition1 || condition2){
+                yLogic();
+            }else{
+                xLogic();
+            }
         
-        var generateRandomTarget = function(){               
-            var newTargetIndex = getRandomInt(0, validCells.length-1);
-            var newTarget = validCells[newTargetIndex];
-            newTarget.fill = ghost.fill;
-            ghost.target1 = newTarget;
-        };
+        //if it's the first time
+        if(!casted.direction){
+            casted.direction = casted.nextDirection;
+        }
+        
+        casted.x += casted.vx;
+        casted.y += casted.vy;
+        
+        return casted;
     }
 }
 
