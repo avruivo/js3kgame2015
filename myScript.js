@@ -310,12 +310,20 @@ Draw.levelInit(levelMatrix, ctx);
     
 };
 
-function initGame() {
-    levelMatrix = Level.level01();
+function initGame(livesLeft) {
+    if(!livesLeft){
+        levelMatrix = Level.level01();
+    }
     //console.log('inited Game');
 
     var eater = Eater(13, 16);
+    if(!livesLeft){
+        eater.lives = GameCfg.lives;
+    }else{
+        eater.lives = livesLeft;
+    }
     
+    movingElements = [];
 
     _prey = eater;
     
@@ -927,8 +935,6 @@ function Eater(x, y) {
     //elem.vx = GameCfg.eaterVx;
     //elem.vy = GameCfg.eaterVx
     
-    elem.lives = GameCfg.lives;
-    
     elem.hit = function(hitter){
         var casted = UiElement('','',''); casted = hitter;
         var temp = elem.lives-1;
@@ -936,6 +942,12 @@ function Eater(x, y) {
         if(this.lives > 0){
             if(casted.cType == Enums.UiElements.ghost){
                 this.lives-= 1;
+                
+                if(this.lives > 0){
+                    initGame(this.lives);
+                }else{
+                    GameLogic.gameOver();
+                }
                 //alert(msg);
             }
         }else{
