@@ -14,7 +14,8 @@ var Enums = {
         black: "#000000",
         white: "#FFFFFF",
         pink: "#FF99FF",
-        aqua: "#33CCFF"
+        aqua: "#33CCFF",
+        green: "#33CC00"
     },
     
     UiElements: {
@@ -36,6 +37,7 @@ var GameCfg = {
     ghostVx: 1,
     lives: 3,
     normalCellScore: 1,
+    xlCellScore: 2,
     chaseTimeSeconds: 7
 }
 
@@ -150,14 +152,22 @@ var GameLogic = {
 //     return scoreElementFromUiElement(x* GameCfg.uiElementsLength, y* GameCfg.uiElementsLength); 
 // }
 
-function scoreElementFromCell(x, y){
+function scoreElementFromCell(x, y, isXl){
     var tempx = (x + (1/2));
     var tempy = (y + (1/2));
     
-    var elem = UiElement(tempx, tempy, Enums.UiElements.dot); //dummy
+    var length = GameCfg.scoreLength;
+    var ctype = Enums.UiElements.dot;
+    
+    if(isXl){
+        length = length*3;
+        ctype = Enums.UiElements.powerup;
+    }
+    
+    var elem = UiElement(tempx, tempy, ctype);
     //elem.cellX = elem.x * GameCfg.uiElementsLength;
     //elem.cellY = elem.y * GameCfg.uiElementsLength;
-    elem.length = GameCfg.scoreLength;
+    elem.length = length;
     
     return elem;
 }
@@ -408,7 +418,9 @@ function drawGame(ctx) {
 
 var Level = {
     level01: function () {
-        var map = "WWWWWWWWWWWWWWWWWWWWWWWWWWWW|WooooooooooooWWooooooooooooW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WoWWWWoWWWWWooooWWWWWoWWWWoW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WooooooooooooWWooooooooooooW|WoWWWWoWWoWWWWWWWWoWWoWWWWoW|WooooooWWooooWWooooWWooooooW|WWoWWWoWWWWWoWWoWWWWWoWWWoWW|WWoWWWoWWWWWoWWoWWWWWoWWWoWW|WooWWWooooooooooooooooWWWooW|WoWWWWoWWoWWwwwwWWoWWoWWWWoW|WoWWWWoWWoWWwwwwWWoWWoWWWWoW|WooooooWWoWWWWWWWWoWWooooooW|WoWWWWoWWoWWWWWWWWoWWoWWWWoW|WoWWWWoWWoWWWWWWWWoWWoWWWWoW|WooWWWoWWooooooooooWWoWWWooW|WWoWWWoWWoWWWWWWWWoWWoWWWoWW|WWoWWWoWWoWWWWWWWWoWWoWWWoWW|WooooooooooooooooooooooooooW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WooWWWoooooooWWoooooooWWWooW|WWoWWWoWWoWWWWWWWWoWWoWWWoWW|WWoWWWoWWoWWWWWWWWoWWoWWWoWW|WooooooWWooooWWooooWWooooooW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WooooooooooooooooooooooooooW|WWWWWWWWWWWWWWWWWWWWWWWWWWWW";
+        var map = "WWWWWWWWWWWWWWWWWWWWWWWWWWWW|WOoooooooooooWWoooooooooooOW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WoWWWWoWWWWWooooWWWWWoWWWWoW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WooooooooooooWWooooooooooooW|WoWWWWoWWoWWWWWWWWoWWoWWWWoW|WooooooWWooooWWooooWWooooooW|WWoWWWoWWWWWoWWoWWWWWoWWWoWW|WWoWWWoWWWWWoWWoWWWWWoWWWoWW|WooWWWooooooooooooooooWWWooW|WoWWWWoWWoWWwwwwWWoWWoWWWWoW|WoWWWWoWWoWWwwwwWWoWWoWWWWoW|WooooooWWoWWWWWWWWoWWooooooW|WoWWWWoWWoWWWWWWWWoWWoWWWWoW|WoWWWWoWWoWWWWWWWWoWWoWWWWoW|WooWWWoWWooooooooooWWoWWWooW|WWoWWWoWWoWWWWWWWWoWWoWWWoWW|WWoWWWoWWoWWWWWWWWoWWoWWWoWW|WooooooooooooooooooooooooooW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WooWWWoooooooWWoooooooWWWooW|WWoWWWoWWoWWWWWWWWoWWoWWWoWW|WWoWWWoWWoWWWWWWWWoWWoWWWoWW|WooooooWWooooWWooooWWooooooW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WOooooooooooooooooooooooooOW|WWWWWWWWWWWWWWWWWWWWWWWWWWWW";
+        
+        // var map = "WWWWWWWWWWWWWWWWWWWWWWWWWWWW|WooooooooooooWWooooooooooooW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WoWWWWoWWWWWooooWWWWWoWWWWoW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WooooooooooooWWooooooooooooW|WoWWWWoWWoWWWWWWWWoWWoWWWWoW|WooooooWWooooWWooooWWooooooW|WWoWWWoWWWWWoWWoWWWWWoWWWoWW|WWoWWWoWWWWWoWWoWWWWWoWWWoWW|WooWWWooooooooooooooooWWWooW|WoWWWWoWWoWWwwwwWWoWWoWWWWoW|WoWWWWoWWoWWwwwwWWoWWoWWWWoW|WooooooWWoWWWWWWWWoWWooooooW|WoWWWWoWWoWWWWWWWWoWWoWWWWoW|WoWWWWoWWoWWWWWWWWoWWoWWWWoW|WooWWWoWWooooooooooWWoWWWooW|WWoWWWoWWoWWWWWWWWoWWoWWWoWW|WWoWWWoWWoWWWWWWWWoWWoWWWoWW|WooooooooooooooooooooooooooW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WooWWWoooooooWWoooooooWWWooW|WWoWWWoWWoWWWWWWWWoWWoWWWoWW|WWoWWWoWWoWWWWWWWWoWWoWWWoWW|WooooooWWooooWWooooWWooooooW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WoWWWWoWWWWWoWWoWWWWWoWWWWoW|WooooooooooooooooooooooooooW|WWWWWWWWWWWWWWWWWWWWWWWWWWWW";
 
         return Level.parseLevel(map);;
     }
@@ -428,6 +440,11 @@ var Level = {
                     || cellType == Enums.UiElements.eater
                     || cellType == Enums.UiElements.powerup); 
                 if(isValidCell){
+                    
+                    if(cellType == Enums.UiElements.powerup){
+                        cell.score = GameCfg.xlCellScore;
+                    }
+                    
                     validCells.push(cell);
                 }
                     
@@ -453,7 +470,8 @@ var Draw = {
         var drawScore = function(hasScore){
             if(hasScore)
             {
-                Draw.scoreElement(element.x, element.y, ctx);
+                var isXl = casted.cType == Enums.UiElements.powerup;
+                Draw.scoreElement(element.x, element.y, isXl, ctx);
             };
         };
         
@@ -465,8 +483,12 @@ var Draw = {
             
         } else if (element.cType == "w") {
             ctx.fillStyle = Enums.Colors.darkBlue;
-        } else if (element.cType == "o") {
+        } else if (element.cType == "o" || element.cType == "O") {
             var fill = Enums.Colors.white;
+            
+            if(element.cType == "O"){
+                //fill = Enums.Colors.green;
+            }
             
             if(element.fill && element.fill != fill){
                 fill = element.fill;
@@ -500,12 +522,20 @@ var Draw = {
         
         
     },
-    scoreElement: function(x, y, ctx){
-        
-        var scoreElem = scoreElementFromCell(x, y);
+    scoreElement: function(x, y, isXl, ctx){
         
         
-        ctxHelper.fillRect2(scoreElem.x, scoreElem.y, GameCfg.scoreLength, GameCfg.scoreLength, Enums.Colors.red, ctx);
+        
+        var fill = Enums.Colors.red;
+        var length = GameCfg.scoreLength;
+        
+        if(isXl){
+            fill = Enums.Colors.green;
+            length = length*3;
+        }
+        
+        var scoreElem = scoreElementFromCell(x, y, isXl);
+        ctxHelper.fillRect2(scoreElem.x, scoreElem.y, length, length, fill, ctx);
     },
     levelInit: function (matrix, ctx) {
         if (matrix && matrix.length > 0) {
