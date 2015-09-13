@@ -12,7 +12,9 @@ var Enums = {
         darkBlue: '#1c5c88',
         red: "#a90000",
         black: "#000000",
-        white: "#FFFFFF"
+        white: "#FFFFFF",
+        pink: "#FF99FF",
+        aqua: "#33CCFF"
     },
     
     UiElements: {
@@ -39,13 +41,35 @@ var GameCfg = {
 
 var GameLogic = {
     isChaseTime: false,
-    setChaseTimeOn: function(value){
+    setChaseTimeOn: function(value, movingElements, validCells){
        if(value){
            document.body.style.backgroundColor = Enums.Colors.red;
            GameLogic.isChaseTime = true;
+           
        } else{
            document.body.style.backgroundColor = Enums.Colors.darkBlue;
            GameLogic.isChaseTime = false;
+       }
+       
+       for (var elemIndex = 0; elemIndex < movingElements.length; elemIndex++) {
+           var ghost =  UiElement('','',''); ghost = movingElements[elemIndex];
+           if(ghost.cType == Enums.UiElements.ghost){
+               if(value){ //set chase time on
+                   var old = ghost.target1;
+                   ghost.target1 = _prey;
+                   old.fill = Enums.Colors.white;
+               }else{
+                   var generateRandomTarget = function(){
+                       
+                       var newTargetIndex = getRandomInt(0, validCells.length-1);
+                       var newTarget = validCells[newTargetIndex];
+                       newTarget.fill = ghost.fill;
+                       ghost.target1 = newTarget;
+                   };
+                   
+                   generateRandomTarget();
+               }
+           }
        }
     },
     checkColision: function(s1, s2) {
@@ -302,8 +326,15 @@ function initGame() {
             var g1 = Ghost(x, y, name);
             g1.DebugName ="Ghost" + ghostsNumber;
             
-            if(ghostsNumber == 2){
-                g1.fill = Enums.Colors.darkBlue;
+            
+            if(ghostsNumber == 1){
+                g1.fill = Enums.Colors.red;
+            }else if(ghostsNumber == 2){
+                g1.fill = Enums.Colors.pink;
+            }else if(ghostsNumber == 3){
+                g1.fill = Enums.Colors.aqua;
+            }else if(ghostsNumber == 4){
+                g1.fill = Enums.Colors.yellow;
             }
             
             g1.target1 = _prey;
@@ -338,14 +369,6 @@ function clearScreen(ctx) {
 
 function updateGame() {
     frameCount++;
-    
-    //60 frames  _ 1 sec
-    //x frames   _ 7 sec
-    
-    var aux = GameCfg.chaseTimeSeconds * 60;
-    if((frameCount < 60 && !GameLogic.isChaseTime)  || (frameCount % aux == 0)){
-        GameLogic.setChaseTimeOn(!GameLogic.isChaseTime);
-    }
 }
 
 function drawGame(ctx) {
@@ -361,6 +384,17 @@ function drawGame(ctx) {
     
     Draw.hpBar(ctx);
     Draw.score(ctx);
+    
+    //60 frames  _ 1 sec
+    //x frames   _ 7 sec
+    var setChaseTime = function(){
+        var aux = GameCfg.chaseTimeSeconds * 60;
+        if((frameCount < 60 && !GameLogic.isChaseTime)  || (frameCount % aux == 0)){
+            GameLogic.setChaseTimeOn(!GameLogic.isChaseTime, movingElements, validCells);
+        }
+    };
+    
+    setChaseTime();
 }
 
 
@@ -414,6 +448,8 @@ var Draw = {
                 Draw.scoreElement(element.x, element.y, ctx);
             };
         };
+        
+        var minus = 0;
 
         if (element.cType == "W") {
             
@@ -422,7 +458,17 @@ var Draw = {
         } else if (element.cType == "w") {
             ctx.fillStyle = Enums.Colors.darkBlue;
         } else if (element.cType == "o") {
-            ctx.fillStyle = Enums.Colors.white;
+            var fill = Enums.Colors.white;
+            
+            if(element.fill && element.fill != fill){
+                fill = element.fill;
+                ctx.globalAlpha = 0.3;
+                minus = 10;
+            }else{
+                ctx.globalAlpha = GameCfg.opacity;
+            }
+            
+            ctx.fillStyle = fill;
             hasScore = (casted.score > 0);
         }
         else {
@@ -433,7 +479,7 @@ var Draw = {
 
         var length = GameCfg.uiElementsLength;
             
-            var minus = 0;
+            
             if(secondCall){
                 minus = 5;
             }
@@ -1002,3 +1048,7 @@ var AI = {
         return calcNextPosition(currElem, true);
     }
 }
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+};
