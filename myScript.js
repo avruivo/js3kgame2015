@@ -33,11 +33,21 @@ var GameCfg = {
     eaterVx: 2,
     ghostVx: 1,
     lives: 3,
-    normalCellScore: 1
+    normalCellScore: 1,
+    chaseTimeSeconds: 7
 }
 
 var GameLogic = {
-    isChaseTime: true,
+    isChaseTime: false,
+    setChaseTimeOn: function(value){
+       if(value){
+           document.body.style.backgroundColor = Enums.Colors.red;
+           GameLogic.isChaseTime = true;
+       } else{
+           document.body.style.backgroundColor = Enums.Colors.darkBlue;
+           GameLogic.isChaseTime = false;
+       }
+    },
     checkColision: function(s1, s2) {
         var casted1 = UiElement('','',''); casted1 = s1; 
         var casted2 = UiElement('','',''); casted2 = s2;
@@ -328,6 +338,14 @@ function clearScreen(ctx) {
 
 function updateGame() {
     frameCount++;
+    
+    //60 frames  _ 1 sec
+    //x frames   _ 7 sec
+    
+    var aux = GameCfg.chaseTimeSeconds * 60;
+    if((frameCount < 60 && !GameLogic.isChaseTime)  || (frameCount % aux == 0)){
+        GameLogic.setChaseTimeOn(!GameLogic.isChaseTime);
+    }
 }
 
 function drawGame(ctx) {
